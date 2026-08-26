@@ -1,0 +1,3 @@
+[submodule "plugins/dsh-web-search-tavily"]
+	path = plugins/dsh-web-search-tavily
+	url = git@github.com:lilitoweiwei/dsh-web-search-tavily.git

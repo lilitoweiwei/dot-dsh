@@ -1,0 +1,5 @@
+# 显式声明 /api 信任的远程访问权威（兜底：CLI --trusted-host 经 webStartup 注入的链路暂未生效）
+- id: connection
+  config:
+    trustedHosts:
+      - dsh.lan.supplient2026.lol:3080

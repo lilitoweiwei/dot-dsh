@@ -1,0 +1,12 @@
+# 密钥与隐私
+.credentials.yaml
+.anonymous-user-id
+
+# 运行时数据（不入版本管理）
+sessions/
+storages/
+attachments/
+llm-deepseek/
+
+# 自动生成的模块 fallback 平面（healProfilesModuleFallback 启动时重建）
+profiles/node_modules/

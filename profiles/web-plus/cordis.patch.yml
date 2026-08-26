@@ -1,0 +1,44 @@
+# web-plus profile: the PlusZero (加灵) system-management surface.
+#
+# Applied after dsh-base and dsh-web-app. Base keeps every seam; web-app
+# disables the tool rows so each session mounts its own agent preset. This
+# layer restates web-provider choices and pins the default agent preset.
+
+# /api 信任的远程访问权威（兜底：CLI --trusted-host 经 webStartup 注入的链路暂未生效）
+- id: connection
+  config:
+    trustedHosts:
+      - dsh.lan.supplient2026.lol:3080
+
+# Web: 挂载 HTTP fetch provider 与 Tavily search provider；显式选中 tavily。
+- insert:
+    # fetch provider：web_fetch 的后端。base 默认不挂（SSRF 由
+    # incus 配置 + tailscale ACL 控制），由本 profile 显式挂载。
+    - id: web-fetch-http
+      name: '@deepseek-ai/dsh-web-fetch-http'
+
+    # search provider：web_search 的后端。本地挂载于
+    # ~/.dsh/profiles/node_modules/@lilitoweiwei/dsh-web-search-tavily，
+    # 源码在 ~/ws/w/20260825-tavily-web-search/dsh-web-search-tavily。
+    - id: web-search-tavily
+      name: '@lilitoweiwei/dsh-web-search-tavily'
+
+# 覆盖 web-app 层插入的 agent-presets 行：默认 preset 切换为 pluszero。
+- id: agent-presets
+  name: '@deepseek-ai/dsh-agent-presets'
+  config:
+    default: pluszero
+    # 验证：从模拟 npm 包路径扫描 preset（测试结束会移除）
+    roots:
+      - path: '~/.dsh/profiles/node_modules/@lilitoweiwei/dsh-pluszero/presets'
+        trust: system
+
+# Web seam：显式选中 Tavily 作为 web_search 的 provider（确定性选择，
+# 不依赖"唯一可用自动选中"）。
+- id: web
+  config:
+    searchProvider: tavily
+
+# 禁用 DeepSeek 官方 search provider：web_search 由 Tavily 提供。
+- id: web-search-deepseek
+  disabled: true

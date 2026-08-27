@@ -4,11 +4,13 @@
 # disables the tool rows so each session mounts its own agent preset. This
 # layer restates web-provider choices and pins the default agent preset.
 
-# /api 信任的远程访问权威（兜底：CLI --trusted-host 经 webStartup 注入的链路暂未生效）
+# /api 信任的远程访问权威（兜底：CLI --trusted-host 经 webStartup 注入的链路暂未生效）。
+# dsh 与 dshu 共用本仓库：dsh 命中 dsh 域名；dshu 命中 dshu 域名（2026-08-27 拆分后补录）。
 - id: connection
   config:
     trustedHosts:
       - dsh.lan.supplient2026.lol:3080
+      - dshu.lan.supplient2026.lol:3080
 
 # Web: 挂载 HTTP fetch provider 与 Tavily search provider；显式选中 tavily。
 - insert:

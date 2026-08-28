@@ -12,8 +12,9 @@
 #   - web fetch enabled, web search enabled (Tavily-backed provider)
 #   - subagents allowed at depth 1 (no nesting)
 #   - compaction kept (automatic + human /compact)
-#   - deliberately absent: skill, goal, workflow/ralph, todo, plan-mode,
-#     ask-user, presentation, terminal, str-replace-editor, pwsh, fork, cordis
+#   - skills enabled: filesystem discovery + `skill` tool (user root ~/.dsh/skills)
+#   - deliberately absent: goal, workflow/ralph, todo, plan-mode, ask-user,
+#     presentation, terminal, str-replace-editor, pwsh, fork, cordis
 #
 # A service row here MUST sit inside a group carrying an `isolate` realm.
 # Without one it publishes into the root realm and `dsh-agent-presets` rejects
@@ -58,6 +59,19 @@
 
 - id: tool-jobs
   name: '@deepseek-ai/dsh-tool-jobs'
+
+# ── skills ──────────────────────────────────────────────────────────────────
+
+# The skill REGISTRY (`dsh-skill`) stays in the host composition; these rows
+# register into THIS preset's layer of it, so they need no realm.
+# `skill-filesystem` discovers roots (project, custom, ~/.dsh/skills,
+# ~/.agents/skills) and `tool-skill` gives the agent the catalog and loader.
+# Skills in the user root are shared by every skill-enabled preset.
+- id: skill-filesystem
+  name: '@deepseek-ai/dsh-skill-filesystem'
+
+- id: tool-skill
+  name: '@deepseek-ai/dsh-tool-skill'
 
 # ── compaction ──────────────────────────────────────────────────────────────
 

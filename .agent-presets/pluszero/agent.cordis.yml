@@ -32,6 +32,9 @@
   name: '@deepseek-ai/dsh-agent-instructions'
   config:
     maxBytes: 65536
+    # 自动注入 README：让"只有 README 没有 AGENTS.md"的仓库（如 ~/.dsh）也能被
+    # workspace 指令机制发现。此字段整组替换默认候选（AGENTS.md + CLAUDE.md）。
+    instructionFileCandidates: ['AGENTS.md', 'CLAUDE.md', 'README.md']
 
 # ── shell ───────────────────────────────────────────────────────────────────
 

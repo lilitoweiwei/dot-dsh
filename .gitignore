@@ -10,3 +10,6 @@ llm-deepseek/
 
 # 自动生成的模块 fallback 平面（healProfilesModuleFallback 启动时重建）
 profiles/node_modules/
+
+# 各 profile 目录内 pnpm 安装的 node_modules（dsh plugin 管理的构建产物）
+profiles/*/node_modules/

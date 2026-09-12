@@ -2,5 +2,7 @@ llm-pi-ai:
   providers: { opencode-go: { apiKeyEnv: OPENCODE_GO_API_KEY } }
 agent-default-model:
   provider: deepseek-official
-  model: deepseek-v4-flash
+  model: deepseek-flash
   reasoningEffort: high
+ui-onboarding:
+  welcomeNoticeVersion: 2026-08-13.1

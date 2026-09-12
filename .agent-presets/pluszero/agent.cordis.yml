@@ -13,8 +13,12 @@
 #   - subagents allowed at depth 1 (no nesting)
 #   - compaction kept (automatic + human /compact)
 #   - skills enabled: filesystem discovery + `skill` tool (user root ~/.dsh/skills)
-#   - deliberately absent: goal, workflow/ralph, todo, plan-mode, ask-user,
-#     presentation, terminal, str-replace-editor, pwsh, fork, cordis
+#   - `present` enabled: the agent declares final files as deliveries, rendered as
+#     cards by the Web client (dsh-client-ui-deliverables, shipped in dsh-web-app)
+#   - deliberately absent: goal (including the human `/goal` command),
+#     workflow/ralph, todo, plan-mode, ask-user, `tool-presentation` (PTC's
+#     presentation selector — NOT the `present` tool above), terminal,
+#     str-replace-editor, pwsh, fork, cordis
 #
 # A service row here MUST sit inside a group carrying an `isolate` realm.
 # Without one it publishes into the root realm and `dsh-agent-presets` rejects
@@ -78,6 +82,30 @@
 - id: tool-skill
   name: '@deepseek-ai/dsh-tool-skill'
 
+# ── goals（显式排除）─────────────────────────────────────────────────────────
+
+# 刻意不启用 goal。上游自 0.1.2 起把 `/goal` 命令与 goal 工具都划归 preset 所有：
+# `packages/bundle/web-app/cordis.patch.yml` 会把 host 面的 `command-goal` 与
+# `tool-goal` 两行一起禁用（注释原文 "Presets own the human command and
+# model-facing tool"），因此不写这两行 = 本 preset 的会话既没有 `/goal`，也无法
+# 创建 goal。0.1.1 时代命令还在 host 面、是继承来的；升级到 0.1.5 后它随这次
+# 平面搬迁一起消失，这是刻意保持的结果，不是漏配。
+#
+# 两行以 `disabled: true` 显式列出，只为把"排除"写成可核对的配置（上游对可选
+# provider 也是这个写法，见 standard 里的 codex/claude-code 行）：Loader 不加载
+# 它们，preset 的插件清单会把它们显示为 disabled。
+#
+# 要启用就整组启用（同时去掉两行的 `disabled`）：goal 服务与 round-driver 始终
+# 留在 host 面并会自动续跑（默认上限 256 轮），只挂命令不挂工具会让模型不知道
+# goal 存在、也无法 complete/block，从而可能空转到上限。
+- id: command-goal
+  name: '@deepseek-ai/dsh-command-goal'
+  disabled: true
+
+- id: tool-goal
+  name: '@deepseek-ai/dsh-tool-goal'
+  disabled: true
+
 # ── compaction ──────────────────────────────────────────────────────────────
 
 # `compaction-basic` reads `toolResultPrune` through `ctx.get`, so the pruner
@@ -130,3 +158,10 @@
     search: true
     fetch: true
     searchTimeoutMs: 60000
+
+# 文件交付（0.1.5-alpha.2 起由 standard/ptc/cordis 挂载）。调用
+# `present(files: [{path, description?}])` 把已存在的文件声明为交付物，Web 端渲染
+# 成卡片（点卡片→右侧栏预览；Host 有桌面时才能用默认程序打开）。只记录路径与
+# 描述：不读内容、不复制、不进模型消息，默认每次最多 8 个文件。
+- id: present
+  name: '@deepseek-ai/dsh-tool-present'

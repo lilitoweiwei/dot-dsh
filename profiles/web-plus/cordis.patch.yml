@@ -7,31 +7,35 @@
 # /api 信任名单不在此写死：connection 行沿用 web-app 基础组合的
 # `trustedHosts: !!js ctx.webRuntime.trustedHosts`，由各机器服务启动参数
 # --trusted-host 注入（dsh 传 dsh 域名，dshu 传 dshu 域名）。
+#
+# 2026-09-11（升级到 dsh 0.1.2-rc.1）两处调整：
+#   1. fetch provider `web-fetch-http` 自 0.1.2 起由 dsh-base 自带并插入
+#      （base 的 web 行同时给出 `fetchProvider: http`），本 profile 不再重复
+#      插入，避免重复 id。
+#   2. profile patch 是「整段替换 config」，所以覆盖 `web` 行时必须把 base 的
+#      `fetchProvider: http` 一并重述，否则 web_fetch 会失去显式 provider。
 
-# Web: 挂载 HTTP fetch provider 与 Tavily search provider；显式选中 tavily。
+# Web: 挂载 Tavily search provider（git submodule，源码即入口，无构建）。
 - insert:
-    # fetch provider：web_fetch 的后端。base 默认不挂（SSRF 由
-    # incus 配置 + tailscale ACL 控制），由本 profile 显式挂载。
-    - id: web-fetch-http
-      name: '@deepseek-ai/dsh-web-fetch-http'
-
-    # search provider：web_search 的后端，git submodule 挂载于
-    # ~/.dsh/plugins/dsh-web-search-tavily（源码即入口，无构建）。
     - id: web-search-tavily
-      # submodule: ~/.dsh/plugins/dsh-web-search-tavily（相对 profile 目录 ../../ 上溯两级）
+      # submodule: ~/.dsh/plugins/dsh-web-search-tavily
+      # 相对 profile 目录 ../../ 上溯两级到 ~/.dsh，再进 plugins/
       name: '../../plugins/dsh-web-search-tavily/src/index.js'
 
 # 覆盖 web-app 层插入的 agent-presets 行：默认 preset 切换为 pluszero。
+# （includeShippedRoot / includeUserRoot 默认均为 true，故 ~/.dsh/.agent-presets
+# 仍会被发现；本行只改默认 preset。）
 - id: agent-presets
   name: '@deepseek-ai/dsh-agent-presets'
   config:
     default: pluszero
 
 # Web seam：显式选中 Tavily 作为 web_search 的 provider（确定性选择，
-# 不依赖"唯一可用自动选中"）。
+# 不依赖"唯一可用自动选中"），并重述 base 的 HTTP fetch provider。
 - id: web
   config:
     searchProvider: tavily
+    fetchProvider: http
 
 # 禁用 DeepSeek 官方 search provider：web_search 由 Tavily 提供。
 - id: web-search-deepseek

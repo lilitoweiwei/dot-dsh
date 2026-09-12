@@ -1,6 +1,6 @@
 # ~/.dsh 配置仓库
 
-本仓库管理 DeepSeek Harness（[github.com/deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)）在本机上的运行期配置。已在 **v0.1.1-rc.2** 上验证可正常运行，其他版本未经测试。
+本仓库管理 DeepSeek Harness（[github.com/deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)）在本机上的运行期配置。已在 **v0.1.5-rc.2**（tag `fb2c4b9e69` + 本地 patch `7990e14ca8`）上验证可正常运行，其他版本未经测试。
 
 ## 仓库布局
 

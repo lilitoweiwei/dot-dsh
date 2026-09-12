@@ -14,6 +14,7 @@
 #      插入，避免重复 id。
 #   2. profile patch 是「整段替换 config」，所以覆盖 `web` 行时必须把 base 的
 #      `fetchProvider: http` 一并重述，否则 web_fetch 会失去显式 provider。
+# 2026-09-12：新增 connection 行覆盖（见文件末尾注释）。
 
 # Web: 挂载 Tavily search provider（git submodule，源码即入口，无构建）。
 - insert:
@@ -40,3 +41,18 @@
 # 禁用 DeepSeek 官方 search provider：web_search 由 Tavily 提供。
 - id: web-search-deepseek
   disabled: true
+
+# 浏览器会话（connection）行覆盖：把 cookie 有效期从默认 30 天提高到 1 年，
+# 以降低"首次访问需从日志取启动令牌"的频率（令牌只在每浏览器 + 每 authority
+# 的首次交换时需要；cookie 跨进程重启有效，签名密钥持久化在 credentials 的
+# client-connection/browser-session）。
+#
+# 语义提示：profile patch 是「整段替换 config」，所以必须把 web-app 原有的
+# `trustedHosts` 表达式与 `inject: [webRuntime]` 一起重述，否则信任围栏会失效、
+# `ctx.webRuntime` 也不再解析。
+- id: connection
+  name: '@deepseek-ai/dsh-client-connection'
+  inject: [webRuntime]
+  config:
+    trustedHosts: !!js ctx.webRuntime.trustedHosts
+    cookieMaxAgeDays: 365

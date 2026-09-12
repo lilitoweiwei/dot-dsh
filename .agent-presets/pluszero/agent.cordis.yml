@@ -25,7 +25,7 @@
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
-    prefix: >-
+    text: >-
       You are the PlusZero system-management agent powered by the {{model}} model.
       Your working directory is {{cwd}}.
 

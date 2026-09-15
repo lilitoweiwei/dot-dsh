@@ -17,11 +17,19 @@
 # 2026-09-12：新增 connection 行覆盖（见文件末尾注释）。
 
 # Web: 挂载 Tavily search provider（git submodule，源码即入口，无构建）。
+# 2026-09-15：显式设 `searchDepth: basic`。插件默认是 `advanced`（2 credits/请求），
+# basic 为 1 credit/请求且延迟更低；本机免费 key 反复撞 432 额度上限，故降档。
+# 插件不发 `auto_parameters`，所以写死 basic 不会被 Tavily 自动升回 advanced。
+# 备选值 `fast` / `ultra-fast` 存在，但 basic 是"质量/延迟"的官方折中点。
+# 放在 insert 条目自己的 config 里（而非另开一条 id 覆盖行）：patch 对已存在行是
+# 「整段替换 config」，inline 才能保证这一行的配置始终只在一处。
 - insert:
     - id: web-search-tavily
       # submodule: ~/.dsh/plugins/dsh-web-search-tavily
       # 相对 profile 目录 ../../ 上溯两级到 ~/.dsh，再进 plugins/
       name: '../../plugins/dsh-web-search-tavily/src/index.js'
+      config:
+        searchDepth: basic
 
 # 覆盖 web-app 层插入的 agent-presets 行：默认 preset 切换为 pluszero。
 # （includeShippedRoot / includeUserRoot 默认均为 true，故 ~/.dsh/.agent-presets

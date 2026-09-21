@@ -5,8 +5,12 @@
     "profile": {
       "bundles": [
         "@deepseek-ai/dsh-base",
-        "@deepseek-ai/dsh-web-app"
+        "@deepseek-ai/dsh-web-app",
+        "dsh-web-mobile"
       ]
     }
+  },
+  "dependencies": {
+    "dsh-web-mobile": "3.0.0"
   }
 }

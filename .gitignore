@@ -13,3 +13,6 @@ profiles/node_modules/
 
 # 各 profile 目录内 pnpm 安装的 node_modules（dsh plugin 管理的构建产物）
 profiles/*/node_modules/
+
+# 各 profile 内 healProfileModuleFallback 拥有的 link 平面（同为启动时重建的构建产物）
+profiles/*/.dsh-module-fallback/

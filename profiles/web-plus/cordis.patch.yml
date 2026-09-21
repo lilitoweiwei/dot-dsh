@@ -64,3 +64,33 @@
   config:
     trustedHosts: !!js ctx.webRuntime.trustedHosts
     cookieMaxAgeDays: 365
+
+# ---------------------------------------------------------------------------
+# 上游竞态 workaround（2026-09-21）：给 client-modules 行补 `inject: [webServer]`。
+#
+# 症状：组合里一旦多出任何额外的 dsh.client 插件行（本次是 dsh-web-mobile），
+# dsh web 会概率性启动失败：
+#   plugin tree failed to load: failed to apply loader entry modules
+#   (@deepseek-ai/dsh-client-modules): cannot get property "webServer" without inject
+#
+# 成因：packages/client/modules/src/index.ts:576 的两个分支
+#   if (ctx.get('webServer') === undefined) ctx.inject(['webServer'], registerWebCarrier)
+#   else registerWebCarrier(ctx)
+# 中 else 分支用 `ctx.webServer` 属性访问，而该插件自身没有声明 inject——Cordis
+# 的属性访问必须由 inject 授权。webserver 行（web-app patch 135 行）排在 modules
+# 行（176 行）之前，但两者都是异步 apply，谁先就绪取决于运行时时序：默认组合里
+# modules 总是先到，所以只有 else 这条死路平时踩不到；多一个插件行扰动时序后就
+# 会踩中（本机 15:58:06 首次启动踩中，systemd Restart=on-failure 重试即恢复）。
+#
+# 修法：行配置的 inject 会经 vendor/loader/src/index.ts:122
+# `Inject.resolve(fiber.entry!.options.inject, fiber.inject)` 进入插件 ctx 的
+# inject 集合。声明后 modules 必然等 webServer 就绪再 apply，走 else 分支时
+# `ctx.webServer` 合法，竞态消失。
+# 无依赖环：无人 inject modules，webserver 只 inject webStartup；且
+# `webserver/index-inject` 是每次请求重新 emit（host/webserver/src/index.ts:342），
+# 订阅晚到不影响页面注入。
+#
+# 上游修好后本段可整段删除。
+- id: modules
+  name: '@deepseek-ai/dsh-client-modules'
+  inject: [webServer]

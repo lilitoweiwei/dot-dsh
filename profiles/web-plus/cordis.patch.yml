@@ -42,6 +42,12 @@
       # `pnpm run build:web` 都会丢）。Android WebAPK 冷启动 401 是另一个问题，
       # 修在网关侧（nginx 同源弹跳），与本插件无关。
       name: '../../plugins/dsh-web-pwa/src/index.js'
+      config:
+        # 2026-09-22：上游 manifest 是 `fullscreen`（连 Android 状态栏一起隐藏），
+        # 手机上退回/看时间都要额外手势。`standalone` 同样是"没有浏览器 UI"，
+        # 但保留系统状态栏与系统导航栏 —— 这才是想要的观感。
+        # （插件默认仍是 fullscreen，刻意与上游一致；选哪个模式属部署选择，故写在这里。）
+        display: standalone
 
 # 覆盖 web-app 层插入的 agent-presets 行：默认 preset 切换为 pluszero。
 # （includeShippedRoot / includeUserRoot 默认均为 true，故 ~/.dsh/.agent-presets

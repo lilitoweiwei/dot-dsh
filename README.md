@@ -48,6 +48,13 @@ dsh plugin --profile web-plus remove <包名>
 
    相对路径以 profile 目录为基准，`../../` 上溯到 `~/.dsh` 再进入 `plugins/`。
 
+当前以这条路径接入：
+
+| 插件 | 做什么 |
+|---|---|
+| `dsh-web-search-tavily` | Tavily 后端的 `web_search` provider（密钥轮转） |
+| `dsh-web-pwa` | DSH Web 的 PWA 安装元数据：自带光栅图标的 manifest + 让浏览器带凭据取 manifest 的 index tap（上游 manifest 用 `sizes:"any"` 的 SVG，Chrome 解析成 `0x0` 装不上；且取 manifest 时不带 cookie，鉴权反代后面只会拿到登录页）。取代了 2026-09-22 之前对 `apps/web/dist` 的手工补丁 |
+
 ### 升级插件
 
 `git submodule update --remote` 拉取插件最新 commit（或手动 `checkout` 到目标 commit），随后在 `.dsh` 仓库提交 gitlink 变更。npm 包路径用 `dsh plugin --profile web-plus add <包名>@<新版本>` 升级。

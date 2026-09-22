@@ -30,6 +30,18 @@
       name: '../../plugins/dsh-web-search-tavily/src/index.js'
       config:
         searchDepth: basic
+- insert:
+    - id: web-pwa
+      # submodule: ~/.dsh/plugins/dsh-web-pwa
+      # 2026-09-22：把 DSH Web 装成手机 PWA 时，上游 manifest 只给一个
+      # `sizes:"any"` 的 SVG 图标（Chrome 解析成 0x0 → 可安装性检查不过），
+      # 且 Chrome 取 manifest 的 fetch 是 credentials: omit（本部署网关对所有
+      # 路径要鉴权 ⇒ 拿到登录页 ⇒ manifest 解析失败）。本插件自带光栅图标，
+      # 并把 index 里的 manifest 链接改指自己的路由（附 crossorigin=
+      # "use-credentials"），取代此前对 apps/web/dist 的手工补丁（那次补丁每次
+      # `pnpm run build:web` 都会丢）。Android WebAPK 冷启动 401 是另一个问题，
+      # 修在网关侧（nginx 同源弹跳），与本插件无关。
+      name: '../../plugins/dsh-web-pwa/src/index.js'
 
 # 覆盖 web-app 层插入的 agent-presets 行：默认 preset 切换为 pluszero。
 # （includeShippedRoot / includeUserRoot 默认均为 true，故 ~/.dsh/.agent-presets

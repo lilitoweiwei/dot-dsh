@@ -76,181 +76,184 @@
   config:
     default: pluszero
 
-- id: preset-pluszero
-  name: '@deepseek-ai/dsh-agent-preset'
-  config:
-    id: pluszero
-    name: PlusZero（加灵）
-    description: 系统管理 Agent：一次性 Bash、文件、网页获取、技能、一层子代理，带沙盒提权。
-    order: 1
-    plugins:
-      # The `pluszero` agent preset: the PlusZero (加灵) system-management agent.
-      #
-      # This is an AGENT-PLANE composition. The roster mounts it ONCE under a standing
-      # scope; every session naming it joins by scope parentage. The host composition
-      # (dsh-base + dsh-web-app + the web-plus profile patch) keeps everything a
-      # preset must not own: the registries themselves, the sandbox and approval
-      # stack, persistence, and the model route.
-      #
-      # Design choices vs `standard`:
-      #   - one-shot `bash` only (no persistent bash / no terminal tools)
-      #   - filesystem suite with sandbox escalation
-      #   - web fetch enabled, web search enabled (Tavily-backed provider)
-      #   - subagents allowed at depth 1 (no nesting)
-      #   - compaction kept (automatic + human /compact)
-      #   - skills enabled: filesystem discovery + `skill` tool (user root ~/.dsh/skills)
-      #   - `present` enabled: the agent declares final files as deliveries, rendered as
-      #     cards by the Web client (dsh-client-ui-deliverables, shipped in dsh-web-app)
-      #   - deliberately absent: goal (including the human `/goal` command),
-      #     workflow/ralph, todo, plan-mode, ask-user, `tool-presentation` (PTC's
-      #     presentation selector — NOT the `present` tool above), terminal,
-      #     str-replace-editor, pwsh, fork, cordis
-      #
-      # A service row here MUST sit inside a group carrying an `isolate` realm.
-      # Without one it publishes into the root realm and `dsh-agent-presets` rejects
-      # the mount. Rows that only register model-facing tools need no realm.
+# preset 声明是**插入**新行（上游 shipped preset 用的也是这种形态）；写成普通
+# by-id 覆盖行会得到 `patch: entry "preset-pluszero" not found`。
+- insert:
+    - id: preset-pluszero
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: pluszero
+        name: PlusZero（加灵）
+        description: 系统管理 Agent：一次性 Bash、文件、网页获取、技能、一层子代理，带沙盒提权。
+        order: 1
+        plugins:
+          # The `pluszero` agent preset: the PlusZero (加灵) system-management agent.
+          #
+          # This is an AGENT-PLANE composition. The roster mounts it ONCE under a standing
+          # scope; every session naming it joins by scope parentage. The host composition
+          # (dsh-base + dsh-web-app + the web-plus profile patch) keeps everything a
+          # preset must not own: the registries themselves, the sandbox and approval
+          # stack, persistence, and the model route.
+          #
+          # Design choices vs `standard`:
+          #   - one-shot `bash` only (no persistent bash / no terminal tools)
+          #   - filesystem suite with sandbox escalation
+          #   - web fetch enabled, web search enabled (Tavily-backed provider)
+          #   - subagents allowed at depth 1 (no nesting)
+          #   - compaction kept (automatic + human /compact)
+          #   - skills enabled: filesystem discovery + `skill` tool (user root ~/.dsh/skills)
+          #   - `present` enabled: the agent declares final files as deliveries, rendered as
+          #     cards by the Web client (dsh-client-ui-deliverables, shipped in dsh-web-app)
+          #   - deliberately absent: goal (including the human `/goal` command),
+          #     workflow/ralph, todo, plan-mode, ask-user, `tool-presentation` (PTC's
+          #     presentation selector — NOT the `present` tool above), terminal,
+          #     str-replace-editor, pwsh, fork, cordis
+          #
+          # A service row here MUST sit inside a group carrying an `isolate` realm.
+          # Without one it publishes into the root realm and `dsh-agent-presets` rejects
+          # the mount. Rows that only register model-facing tools need no realm.
 
-      # ── identity ────────────────────────────────────────────────────────────────
+          # ── identity ────────────────────────────────────────────────────────────────
 
-      # persona 自 dsh 0.1.5（0.1.3-alpha.2 起拆分）分为 prefix/suffix：
-      #   prefix → 身份，order 0（紧跟 harness:identity、工具指导之前）
-      #   suffix → 本地路径，order 10200（全篇最后，排在 HARNESS_SOURCE/WEB_SURFACE 之后）
-      # suffix 必须显式写：dsh-persona 无条件注册两个 section，section 按名字覆盖，
-      # 不写 suffix（默认空串）会用空文本把部署级那句 "Your working directory is {{cwd}}."
-      # 静默屏蔽掉。与上游 standard/ptc/cordis 及部署默认保持同构。
-      - id: persona
-        name: '@deepseek-ai/dsh-persona'
-        config:
-          prefix: You are the PlusZero system-management agent powered by the {{model}} model.
-          suffix: Your working directory is {{cwd}}.
-
-      - id: agent-instructions
-        name: '@deepseek-ai/dsh-agent-instructions'
-        config:
-          maxBytes: 65536
-          # 自动注入 README：让"只有 README 没有 AGENTS.md"的仓库（如 ~/.dsh）也能被
-          # workspace 指令机制发现。此字段整组替换默认候选（AGENTS.md + CLAUDE.md）。
-          instructionFileCandidates: ['AGENTS.md', 'CLAUDE.md', 'README.md']
-
-      # ── shell ───────────────────────────────────────────────────────────────────
-
-      # One-shot `bash -c`: fresh shell per call, sandbox escalation via
-      # `sandbox_permissions` + `justification`. No persistent/terminal tools.
-      - id: tool-bash
-        name: '@deepseek-ai/dsh-tool-bash'
-        disabled: !!js process.platform === 'win32'
-
-      # ── filesystem ──────────────────────────────────────────────────────────────
-
-      - id: tool-fs
-        name: '@deepseek-ai/dsh-tool-fs'
-
-      - id: tool-fs-search
-        name: '@deepseek-ai/dsh-tool-fs-search'
-        config:
-          sampleOverCapGlobResults: false
-
-      # ── background jobs ─────────────────────────────────────────────────────────
-
-      - id: tool-jobs
-        name: '@deepseek-ai/dsh-tool-jobs'
-
-      # ── skills ──────────────────────────────────────────────────────────────────
-
-      # The skill REGISTRY (`dsh-skill`) stays in the host composition; these rows
-      # register into THIS preset's layer of it, so they need no realm.
-      # `skill-filesystem` discovers roots (project, custom, ~/.dsh/skills,
-      # ~/.agents/skills) and `tool-skill` gives the agent the catalog and loader.
-      # Skills in the user root are shared by every skill-enabled preset.
-      - id: skill-filesystem
-        name: '@deepseek-ai/dsh-skill-filesystem'
-
-      - id: tool-skill
-        name: '@deepseek-ai/dsh-tool-skill'
-
-      # ── goals（显式排除）─────────────────────────────────────────────────────────
-
-      # 刻意不启用 goal。上游自 0.1.2 起把 `/goal` 命令与 goal 工具都划归 preset 所有：
-      # `packages/bundle/web-app/cordis.patch.yml` 会把 host 面的 `command-goal` 与
-      # `tool-goal` 两行一起禁用（注释原文 "Presets own the human command and
-      # model-facing tool"），因此不写这两行 = 本 preset 的会话既没有 `/goal`，也无法
-      # 创建 goal。0.1.1 时代命令还在 host 面、是继承来的；升级到 0.1.5 后它随这次
-      # 平面搬迁一起消失，这是刻意保持的结果，不是漏配。
-      #
-      # 两行以 `disabled: true` 显式列出，只为把"排除"写成可核对的配置（上游对可选
-      # provider 也是这个写法，见 standard 里的 codex/claude-code 行）：Loader 不加载
-      # 它们，preset 的插件清单会把它们显示为 disabled。
-      #
-      # 要启用就整组启用（同时去掉两行的 `disabled`）：goal 服务与 round-driver 始终
-      # 留在 host 面并会自动续跑（默认上限 256 轮），只挂命令不挂工具会让模型不知道
-      # goal 存在、也无法 complete/block，从而可能空转到上限。
-      - id: command-goal
-        name: '@deepseek-ai/dsh-command-goal'
-        disabled: true
-
-      - id: tool-goal
-        name: '@deepseek-ai/dsh-tool-goal'
-        disabled: true
-
-      # ── compaction ──────────────────────────────────────────────────────────────
-
-      # `compaction-basic` reads `toolResultPrune` through `ctx.get`, so the pruner
-      # must share this realm rather than sit outside it.
-      - id: compaction
-        name: cordis:group
-        group: true
-        isolate:
-          compaction: true
-          toolResultPruner: true
-        config:
-          - id: compaction-basic
-            name: '@deepseek-ai/dsh-compaction-basic'
-
-          - id: command-compact
-            name: '@deepseek-ai/dsh-command-compact'
-
-          - id: tool-result-pruner
-            name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+          # persona 自 dsh 0.1.5（0.1.3-alpha.2 起拆分）分为 prefix/suffix：
+          #   prefix → 身份，order 0（紧跟 harness:identity、工具指导之前）
+          #   suffix → 本地路径，order 10200（全篇最后，排在 HARNESS_SOURCE/WEB_SURFACE 之后）
+          # suffix 必须显式写：dsh-persona 无条件注册两个 section，section 按名字覆盖，
+          # 不写 suffix（默认空串）会用空文本把部署级那句 "Your working directory is {{cwd}}."
+          # 静默屏蔽掉。与上游 standard/ptc/cordis 及部署默认保持同构。
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
             config:
-              thresholdChars: 8192
-              headChars: 4096
-              tailChars: 1024
+              prefix: You are the PlusZero system-management agent powered by the {{model}} model.
+              suffix: Your working directory is {{cwd}}.
 
-      # ── delegation ──────────────────────────────────────────────────────────────
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+              # 自动注入 README：让"只有 README 没有 AGENTS.md"的仓库（如 ~/.dsh）也能被
+              # workspace 指令机制发现。此字段整组替换默认候选（AGENTS.md + CLAUDE.md）。
+              instructionFileCandidates: ['AGENTS.md', 'CLAUDE.md', 'README.md']
 
-      # One level of subagents only: `maxDepth: 1` forbids a child spawning its own
-      # child. No workflow / ralph / fork.
-      - id: tool-subagent-control
-        name: '@deepseek-ai/dsh-tool-subagent-control'
+          # ── shell ───────────────────────────────────────────────────────────────────
 
-      - id: tool-subagent-list-agents
-        name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+          # One-shot `bash -c`: fresh shell per call, sandbox escalation via
+          # `sandbox_permissions` + `justification`. No persistent/terminal tools.
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
 
-      - id: tool-subagent
-        name: '@deepseek-ai/dsh-tool-subagent'
-        config:
-          provider: spawn
-          toolName: subagent
-          backgroundMode: continuable
-          maxDepth: 1
+          # ── filesystem ──────────────────────────────────────────────────────────────
 
-      # ── remaining model-facing rows ─────────────────────────────────────────────
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
 
-      # Web: fetch and search enabled. `web-fetch-http` and the Tavily search
-      # provider are mounted on the host plane by the web-plus profile patch.
-      - id: tool-web
-        name: '@deepseek-ai/dsh-tool-web'
-        config:
-          search: true
-          fetch: true
-          searchTimeoutMs: 60000
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
 
-      # 文件交付（0.1.5-alpha.2 起由 standard/ptc/cordis 挂载）。调用
-      # `present(files: [{path, description?}])` 把已存在的文件声明为交付物，Web 端渲染
-      # 成卡片（点卡片→右侧栏预览；Host 有桌面时才能用默认程序打开）。只记录路径与
-      # 描述：不读内容、不复制、不进模型消息，默认每次最多 8 个文件。
-      - id: present
-        name: '@deepseek-ai/dsh-tool-present'
+          # ── background jobs ─────────────────────────────────────────────────────────
+
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+
+          # ── skills ──────────────────────────────────────────────────────────────────
+
+          # The skill REGISTRY (`dsh-skill`) stays in the host composition; these rows
+          # register into THIS preset's layer of it, so they need no realm.
+          # `skill-filesystem` discovers roots (project, custom, ~/.dsh/skills,
+          # ~/.agents/skills) and `tool-skill` gives the agent the catalog and loader.
+          # Skills in the user root are shared by every skill-enabled preset.
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+
+          # ── goals（显式排除）─────────────────────────────────────────────────────────
+
+          # 刻意不启用 goal。上游自 0.1.2 起把 `/goal` 命令与 goal 工具都划归 preset 所有：
+          # `packages/bundle/web-app/cordis.patch.yml` 会把 host 面的 `command-goal` 与
+          # `tool-goal` 两行一起禁用（注释原文 "Presets own the human command and
+          # model-facing tool"），因此不写这两行 = 本 preset 的会话既没有 `/goal`，也无法
+          # 创建 goal。0.1.1 时代命令还在 host 面、是继承来的；升级到 0.1.5 后它随这次
+          # 平面搬迁一起消失，这是刻意保持的结果，不是漏配。
+          #
+          # 两行以 `disabled: true` 显式列出，只为把"排除"写成可核对的配置（上游对可选
+          # provider 也是这个写法，见 standard 里的 codex/claude-code 行）：Loader 不加载
+          # 它们，preset 的插件清单会把它们显示为 disabled。
+          #
+          # 要启用就整组启用（同时去掉两行的 `disabled`）：goal 服务与 round-driver 始终
+          # 留在 host 面并会自动续跑（默认上限 256 轮），只挂命令不挂工具会让模型不知道
+          # goal 存在、也无法 complete/block，从而可能空转到上限。
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+            disabled: true
+
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+            disabled: true
+
+          # ── compaction ──────────────────────────────────────────────────────────────
+
+          # `compaction-basic` reads `toolResultPrune` through `ctx.get`, so the pruner
+          # must share this realm rather than sit outside it.
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+
+          # ── delegation ──────────────────────────────────────────────────────────────
+
+          # One level of subagents only: `maxDepth: 1` forbids a child spawning its own
+          # child. No workflow / ralph / fork.
+          - id: tool-subagent-control
+            name: '@deepseek-ai/dsh-tool-subagent-control'
+
+          - id: tool-subagent-list-agents
+            name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+
+          - id: tool-subagent
+            name: '@deepseek-ai/dsh-tool-subagent'
+            config:
+              provider: spawn
+              toolName: subagent
+              backgroundMode: continuable
+              maxDepth: 1
+
+          # ── remaining model-facing rows ─────────────────────────────────────────────
+
+          # Web: fetch and search enabled. `web-fetch-http` and the Tavily search
+          # provider are mounted on the host plane by the web-plus profile patch.
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              search: true
+              fetch: true
+              searchTimeoutMs: 60000
+
+          # 文件交付（0.1.5-alpha.2 起由 standard/ptc/cordis 挂载）。调用
+          # `present(files: [{path, description?}])` 把已存在的文件声明为交付物，Web 端渲染
+          # 成卡片（点卡片→右侧栏预览；Host 有桌面时才能用默认程序打开）。只记录路径与
+          # 描述：不读内容、不复制、不进模型消息，默认每次最多 8 个文件。
+          - id: present
+            name: '@deepseek-ai/dsh-tool-present'
 
 # Web seam：显式选中 Tavily 作为 web_search 的 provider（确定性选择，
 # 不依赖"唯一可用自动选中"），并重述 base 的 HTTP fetch provider。

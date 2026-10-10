@@ -11,6 +11,6 @@
     }
   },
   "dependencies": {
-    "dsh-web-mobile": "3.0.0"
+    "dsh-web-mobile": "3.0.3"
   }
 }

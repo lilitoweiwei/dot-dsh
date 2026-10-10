@@ -9,13 +9,13 @@ importers:
   .:
     dependencies:
       dsh-web-mobile:
-        specifier: 3.0.0
-        version: 3.0.0
+        specifier: 3.0.3
+        version: 3.0.3
 
 packages:
 
-  dsh-web-mobile@3.0.0:
-    resolution: {integrity: sha512-9a01rzjrzy3oFRAzZscrSBM4tLAiAwqoXziF+h8V9/h2wLD48u5433vhTOKccCmcx10QPNJ43Ekpb/YIlY5Oew==}
+  dsh-web-mobile@3.0.3:
+    resolution: {integrity: sha512-zLPm0y1ZwstdeovpMLoVwHz5k0I9mN0SfNKWajvtsusUO2cXSrRZK5d0fSYNUYD/vg+svCTDv8Cq6b+8IuuGhA==}
     engines: {node: '>=24.0.0'}
     peerDependencies:
       '@deepseek-ai/cordis': ^4.0.1
@@ -37,4 +37,4 @@ packages:
 
 snapshots:
 
-  dsh-web-mobile@3.0.0: {}
+  dsh-web-mobile@3.0.3: {}

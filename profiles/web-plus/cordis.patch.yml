@@ -311,8 +311,8 @@
 - id: agent-default-model
   name: "@deepseek-ai/dsh-agent-default-model"
   config:
-    provider: deepseek-official
-    model: deepseek-flash
+    provider: opencode-go
+    model: deepseek-v4.1-flash
     reasoningEffort: high
 - id: ui-settings-general
   name: "@deepseek-ai/dsh-client-ui-settings-general"

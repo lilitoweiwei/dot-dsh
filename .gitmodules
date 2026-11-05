@@ -4,3 +4,6 @@
 [submodule "plugins/dsh-web-pwa"]
 	path = plugins/dsh-web-pwa
 	url = git@github.com:lilitoweiwei/dsh-web-pwa.git
+[submodule "plugins/dsh-wsjump"]
+	path = plugins/dsh-wsjump
+	url = git@github.com:lilitoweiwei/dsh-wsjump.git

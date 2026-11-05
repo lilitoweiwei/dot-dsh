@@ -323,16 +323,9 @@
   config:
     fontSize: 15
 
-# ── dsh-wsjump：侧栏工作区面板 ───────────────────────────────────────────────
+# ── dsh-wsjump：侧栏工作区面板（submodule plugins/dsh-wsjump）────────────────
 #
-# 工作区检索 / 创建 / 元信息编辑（wsjump 的 Web 面板）。插件本体是 submodule
-# plugins/dsh-wsjump（git@github.com:lilitoweiwei/dsh-wsjump.git）。
-#
-# 入口指向构建产物 lib/index.js：lib/ 不进版本管理，submodule 更新后必须在插件
-# 目录跑一次 `npm install && npm run build`（详见插件 README）。
-# 浏览器半边由 client-modules 从同一个 package.json 的 dsh.client + exports["./client"]
-# 发现，改动后由 client-hmr 的 stat 轮询热替换；Host 半边改动需要重启服务。
-#
+# 入口指向构建产物 lib/index.js（lib/ 不进版本管理，构建与挂载细节见插件 README）。
 # wsjumpPath 显式写成绝对路径：服务进程的 PATH 不保证包含 ~/ws/bin。
 - insert:
     - id: dsh-wsjump

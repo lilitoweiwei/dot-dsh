@@ -1,7 +1,6 @@
 # ~/.dsh 配置仓库
 
-本仓库管理 DeepSeek Harness（[github.com/deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)）在本机上的运行期配置。已在 **v0.2.0-rc.2**（tag `639ed01539` + 本地 patch `08b1192592`，分支 `upgrade/0.2.0-rc.2`，
-2026-10-10 升级）上验证可正常运行，其他版本未经测试。
+本仓库管理 DeepSeek Harness（[github.com/deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)）在本机上的运行期配置。当前针对 **v0.2.0-rc.2**（tag `639ed01539` + 本地 patch `08b1192592`，分支 `upgrade/0.2.0-rc.2`）验证，其他版本未经测试。
 运行这个版本要求 **nodejs.org 的官方 Node 二进制**（不是 nixpkgs 构建的 Node），
 原因与自检命令见 `~/ws/w/20260818-dsh/README.md` 注意事项 10。
 
@@ -57,7 +56,8 @@ dsh plugin --profile web-plus remove <包名>
 | 插件 | 做什么 |
 |---|---|
 | `dsh-web-search-tavily` | Tavily 后端的 `web_search` provider（密钥轮转） |
-| `dsh-web-pwa` | DSH Web 的 PWA 安装元数据：自带光栅图标的 manifest + 让浏览器带凭据取 manifest 的 index tap（上游 manifest 用 `sizes:"any"` 的 SVG，Chrome 解析成 `0x0` 装不上；且取 manifest 时不带 cookie，鉴权反代后面只会拿到登录页）。取代了 2026-09-22 之前对 `apps/web/dist` 的手工补丁 |
+| `dsh-web-pwa` | DSH Web 的 PWA 安装元数据：自带光栅图标的 manifest + 让浏览器带凭据取 manifest 的 index tap（上游 manifest 用 `sizes:"any"` 的 SVG，Chrome 解析成 `0x0` 装不上；且取 manifest 时不带 cookie，鉴权反代后面只会拿到登录页） |
+| `dsh-wsjump` | DSH Web 侧栏的工作区面板：检索 / 新建 wsjump 工作区，编辑其标签与描述（元信息写入 `wsmeta.txt`） |
 
 ### 升级插件
 
@@ -91,8 +91,5 @@ pnpm --dir ~/.dsh/profiles/web-plus install
 漏掉 `pnpm install` 时，profile 里以 npm 包接入的插件行解析不到包，启动会报
 `plugin tree failed to load`。
 
-## 已知上游 workaround
-
-| 位置 | 问题 | 状态 |
-|---|---|---|
-| `profiles/web-plus/cordis.patch.yml` 末尾（`- id: modules` 段） | 组合里多出任何 `dsh.client` 行会踩中 `client-modules` 的启动竞态，首次启动可能报 `cannot get property "webServer" without inject` | 以行配置 `inject: [webServer]` 绕过（未改上游源码）；成因、依据与删除条件见该段注释 |
+`lib/` 不进版本管理的插件（如 `dsh-wsjump`）还要在其目录执行一次
+`npm install && npm run build`，否则 profile 里的入口解析不到文件。

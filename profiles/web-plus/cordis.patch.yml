@@ -308,12 +308,24 @@
     providers:
       opencode-go:
         apiKeyEnv: OPENCODE_GO_API_KEY
+        # 2026-11-10：内置目录（pi-ai 0.87.1，源自 models.dev）把 deepseek-v4.1-flash 的
+        # off 标为不支持（efforts 只有 low/high/max），于是 DSH 的选择器里没有 Off。
+        # 这里只重塑这一个模型：显式声明四级。off 留空 = 支持且不发送推理字段，
+        # thinkingFormat: deepseek 的分派据此发出 thinking:{type:"disabled"}。
+        # 是否真被网关接受待实测；不生效就删掉这几行，改回继承目录。
+        modelOverrides:
+          deepseek-v4.1-flash:
+            reasoningEfforts:
+              off:
+              low: low
+              high: high
+              max: max
 - id: agent-default-model
   name: "@deepseek-ai/dsh-agent-default-model"
   config:
     provider: opencode-go
     model: deepseek-v4.1-flash
-    reasoningEffort: high
+    reasoningEffort: off
 - id: ui-settings-general
   name: "@deepseek-ai/dsh-client-ui-settings-general"
   config:

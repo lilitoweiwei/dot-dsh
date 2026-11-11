@@ -5,8 +5,10 @@
 # layer restates web-provider choices and pins the default agent preset.
 #
 # /api 信任名单不在此写死：connection 行沿用 web-app 基础组合的
-# `trustedHosts: !!js ctx.webRuntime.trustedHosts`，由各机器服务启动参数
+# `trustedHosts: !!js ctx.webStartup.trustedHosts`，由各机器服务启动参数
 # --trusted-host 注入（dsh 传 dsh 域名，dshu 传 dshu 域名）。
+# 2026-11-11（升级到 0.2.2-rc.2）：web-app 把 `webRuntime` 服务换成了
+# `webStartup`（同一份 trustedHosts），故 inject 与表达式同步改名。
 #
 # 2026-09-11（升级到 dsh 0.1.2-rc.1）两处调整：
 #   1. fetch provider `web-fetch-http` 自 0.1.2 起由 dsh-base 自带并插入
@@ -115,18 +117,19 @@
 
           # ── identity ────────────────────────────────────────────────────────────────
 
-          # persona 自 dsh 0.1.5（0.1.3-alpha.2 起拆分）分为 prefix/suffix：
-          #   prefix → 身份，order 0（紧跟 harness:identity、工具指导之前）
-          #   suffix → 本地路径，order 10200（全篇最后，排在 HARNESS_SOURCE/WEB_SURFACE 之后）
-          # suffix 必须显式写：dsh-persona 无条件注册两个 section，section 按名字覆盖，
-          # 不写 suffix（默认空串）会用空文本把部署级那句 "Your working directory is {{cwd}}."
-          # 静默屏蔽掉。与上游 standard/ptc/cordis 及部署默认保持同构。
+          # persona 自 dsh 0.1.5 分为 prefix/suffix。0.2.0 时这里显式写过 suffix，
+          # 理由是「dsh-persona 无条件注册两个 section，不写 suffix 会用空文本把部署级
+          # 那句 working-directory 静默屏蔽掉」。
+          # 2026-11-11（升级到 0.2.2-rc.2）：`{{cwd}}` 变量没了 —— agent-loop 只注册
+          # `provider`/`model`（`cwd` 改由 base 新挂的 working-directory 服务提供），
+          # 留着 suffix 会让每个会话第一条请求就抛
+          # `unknown prompt variable "{{cwd}}"`。上游 standard/ptc/cordis 都已删掉，
+          # 这里跟随：工作目录那句由 working-directory 服务自己注入。
           - id: persona
             name: '@deepseek-ai/dsh-persona'
             config:
               prefix: You are the PlusZero system-management agent powered by the {{model}}
                 model.
-              suffix: Your working directory is {{cwd}}.
 
           - id: agent-instructions
             name: '@deepseek-ai/dsh-agent-instructions'
@@ -146,8 +149,12 @@
 
           # ── filesystem ──────────────────────────────────────────────────────────────
 
+          # `applyPatch` 默认即 false；显式写出来只为固化（不写也不会凭空多出
+          # apply_patch 工具，但写明可以挡住未来的默认值漂移）。
           - id: tool-fs
             name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              applyPatch: false
 
           - id: tool-fs-search
             name: '@deepseek-ai/dsh-tool-fs-search'
@@ -224,18 +231,21 @@
 
           # One level of subagents only: `maxDepth: 1` forbids a child spawning its own
           # child. No workflow / ralph / fork.
+          # 2026-11-11：`interrupt` 不写就吃默认 true（会多出一个 interrupt_agent 工具），
+          # 与上游 base/三个 shipped preset 的 `false` 分叉。显式对齐上游。
           - id: tool-subagent-control
             name: '@deepseek-ai/dsh-tool-subagent-control'
+            config:
+              interrupt: false
 
-          - id: tool-subagent-list-agents
-            name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
-
+          # 2026-11-11：`backgroundMode` 自 0.2.1 起删除（静默忽略）。委派统一成
+          # "托管 activation"：立即返回名字、结果走完成通知 —— 原来 continuable 的
+          # 行为成了唯一行为，所以删键不丢能力。
           - id: tool-subagent
             name: '@deepseek-ai/dsh-tool-subagent'
             config:
               provider: spawn
               toolName: subagent
-              backgroundMode: continuable
               maxDepth: 1
 
           # ── remaining model-facing rows ─────────────────────────────────────────────
@@ -248,6 +258,10 @@
               search: true
               fetch: true
               searchTimeoutMs: 60000
+              # 0.2.2 把默认配额从 4 queries / 8 results 提到 10 / 10。Tavily 走
+              # 免费 key + basic 档，一次搜索按 queries 计费，这里显式钉回旧值。
+              searchMaxQueries: 4
+              searchMaxResults: 8
 
           # 文件交付（0.1.5-alpha.2 起由 standard/ptc/cordis 挂载）。调用
           # `present(files: [{path, description?}])` 把已存在的文件声明为交付物，Web 端渲染
@@ -267,19 +281,30 @@
 - id: web-search-deepseek
   disabled: true
 
+# ── 先读后写防护：显式打开（2026-11-11，0.2.2 升级）─────────────────────────
+#
+# base 在 0.2.2 把这个策略改成 `disabled: true` 交付：`write` 直接覆盖、
+# `edit` 直接替换字面文本，"先读后写"的观察校验整体消失。本机的系统提示词
+# 仍在宣称这条约束（工具描述也依赖它），所以这里把行按老行为打开。
+- id: fs-observation-policy
+  disabled: false
+
 # 浏览器会话（connection）行覆盖：把 cookie 有效期从默认 30 天提高到 1 年，
 # 以降低"首次访问需从日志取启动令牌"的频率（令牌只在每浏览器 + 每 authority
 # 的首次交换时需要；cookie 跨进程重启有效，签名密钥持久化在 credentials 的
 # client-connection/browser-session）。
 #
 # 语义提示：profile patch 是「整段替换 config」，所以必须把 web-app 原有的
-# `trustedHosts` 表达式与 `inject: [webRuntime]` 一起重述，否则信任围栏会失效、
-# `ctx.webRuntime` 也不再解析。
+# `trustedHosts` 表达式与 `inject` 一起重述，否则信任围栏会失效、表达式也不再解析。
+#
+# 2026-11-11（升级到 0.2.2-rc.2）：`webRuntime` 服务已由 `webStartup` 取代。
+# 不改的表现是最难查的一种：该行等一个永不挂载的服务，Web UI 根本不启动。
+# `cookieMaxAgeDays` 必须一起重述（整段替换 config）。
 - id: connection
   name: '@deepseek-ai/dsh-client-connection'
-  inject: [ webRuntime ]
+  inject: [ webStartup ]
   config:
-    trustedHosts: !!js ctx.webRuntime.trustedHosts
+    trustedHosts: !!js ctx.webStartup.trustedHosts
     cookieMaxAgeDays: 365
 
 # ── 会话日志上传：显式关闭（2026-10-10，0.2.0 升级）─────────────────────────

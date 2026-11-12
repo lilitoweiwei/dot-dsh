@@ -223,7 +223,7 @@
           # ── delegation ──────────────────────────────────────────────────────────────
 
           # One level of subagents only: `maxDepth: 1` forbids a child spawning its own
-          # child. No workflow / ralph / fork.
+          # child. No workflow / ralph.
           # `interrupt` 不写会吃插件默认 true（多出一个 interrupt_agent 工具），与
           # base 及三个自带 preset 的 false 分叉，故显式对齐。
           - id: tool-subagent-control
@@ -238,6 +238,16 @@
             config:
               provider: spawn
               toolName: subagent
+              maxDepth: 1
+
+          # 两条委派路径分工：`subagent` 起全新上下文（任务描述需自带全部背景），
+          # `subagent_fork` 继承父级已完成轮次（长上下文里分工时，子级不必重述前情）。
+          # fork 不接受模型选择参数（上游刻意省略以复用 KV 前缀）与 `agent_preset`。
+          - id: tool-subagent-fork
+            name: '@deepseek-ai/dsh-tool-subagent'
+            config:
+              provider: fork
+              toolName: subagent_fork
               maxDepth: 1
 
           # ── remaining model-facing rows ─────────────────────────────────────────────

@@ -64,7 +64,7 @@ dsh plugin --profile web-plus remove <包名>
 | `dsh-web-search-tavily` | Tavily 后端的 `web_search` provider（密钥轮转） |
 | `dsh-web-pwa` | DSH Web 的 PWA 安装元数据：自带光栅图标的 manifest + 让浏览器带凭据取 manifest 的 index tap（上游 manifest 用 `sizes:"any"` 的 SVG，Chrome 解析成 `0x0` 装不上；且取 manifest 时不带 cookie，鉴权反代后面只会拿到登录页） |
 | `dsh-wsjump` | DSH Web 侧栏的工作区面板：检索 / 新建 wsjump 工作区，编辑其标签与描述（元信息写入 `wsmeta.txt`） |
-| `dsh-editor` | 右侧栏文件编辑器（**fork**：[`lilitoweiwei/dsh-editor`](https://github.com/lilitoweiwei/dsh-editor)，上游 `dongasai/dsh_editor` v1.2.0）。官方文档预览只读，它补上「✎ 编辑」/「🗑 删除」按钮、可保存的编辑器页签与自带文件树的「文件编辑」面板；写盘走插件自己的六条 `/workspace-editor/*` Host 路由，带版本闸、工作区包含检查与沙箱策略。包名与客户端 id 为 `@lilitoweiwei/dsh-editor`（不发布 npm，仅本机 submodule + patch 行接入） |
+| `dsh-editor` | 右侧栏文件编辑器（**fork**：[`lilitoweiwei/dsh-editor`](https://github.com/lilitoweiwei/dsh-editor)，上游 `dongasai/dsh_editor` v1.2.0）。官方文档预览只读，它把编辑器注册成文档渲染器（「打开方式」下拉里可逆切换），并补上「🗑 删除」按钮、可保存的编辑器页签与自带文件树的「文件编辑」面板；写盘走插件自己的六条 `/workspace-editor/*` Host 路由，带版本闸、工作区包含检查与沙箱策略。包名与客户端 id 为 `@lilitoweiwei/dsh-editor`（不发布 npm，仅本机 submodule + patch 行接入） |
 
 ### 升级插件
 

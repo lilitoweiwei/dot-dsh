@@ -7,3 +7,6 @@
 [submodule "plugins/dsh-wsjump"]
 	path = plugins/dsh-wsjump
 	url = git@github.com:lilitoweiwei/dsh-wsjump.git
+[submodule "plugins/dsh-editor"]
+	path = plugins/dsh-editor
+	url = git@github.com:lilitoweiwei/dsh-editor.git

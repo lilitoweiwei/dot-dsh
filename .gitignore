@@ -16,3 +16,5 @@ profiles/*/node_modules/
 
 # 各 profile 内 healProfileModuleFallback 拥有的 link 平面（同为启动时重建的构建产物）
 profiles/*/.dsh-module-fallback/
+# Plugin Manager 的 pnpm 运行记录（每次安装/卸载写一条，运行时数据）
+profiles/*/.plugin-manager/

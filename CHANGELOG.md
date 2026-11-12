@@ -6,6 +6,21 @@ DSH 本身的版本升级流水（升到哪一版、回退点在哪）不在这�
 
 ## 0.2.2 时代
 
+### 2026-11-12 — 回车语义插件 + 工作区文件编辑器（fork）
+
+- **新增 `dsh-ctrl-enter-submit@1.1.1`**（路径 A，npm）：Enter 只换行、Ctrl/Cmd+Enter 发送。做法是在
+  `document` 捕获阶段把无修饰键的 Enter 改写成 `shiftKey: true`，让宿主键位表自己走
+  `INSERT_LINE_BREAK` 分支；`/`、`@` 候选菜单可见、输入法组合中、带 Ctrl/Cmd/Alt 时一律放行。
+  无设置项：停用插件即恢复原生「Enter 发送」。
+- **新增 `dsh-editor`（fork）**：`lilitoweiwei/dsh-editor`，基线 `dongasai/dsh_editor` v1.2.0
+  （`babd882`）。按 **路径 B** 接入（submodule + patch 行 `../../plugins/dsh-editor/index.js`），
+  不再走 npm，也不在 `dsh.profile.bundles` 里选它；包名与客户端 id 改为 `@lilitoweiwei/dsh-editor`
+  （`src/client.js` 的 `PACKAGE_NAME` 与派生 id 同步改名，`client.js` 由 `npm run build` 重新生成）。
+- **为什么 fork**：后续要按本机习惯改造（编辑器形态、面板入口等），fork 保留上游 remote 便于合并；
+  上游 npm 包名留在别人 scope 下，改了 id 才能与「路径 B」的挂载方式对齐。
+- **生效方式**：两条都是热装载（HMR 重组 profile 组合），host 未重启；浏览器硬刷新一次。
+  唯独改插件 `index.js` 的内容需要重启 `dsh-web`（`~/.dsh/plugins/` 不在 HMR 监视集内）。
+
 ### 2026-11-12 — 启用 `subagent_fork`
 
 - pluszero 加 `tool-subagent-fork`（`provider: fork`、`maxDepth: 1`）。上一批的「明确不开」清单里划掉 `subagent_fork`。

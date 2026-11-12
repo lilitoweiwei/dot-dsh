@@ -37,8 +37,12 @@ dsh plugin --profile web-plus remove <包名>
 `profiles/<profile>/node_modules/` 的实体是构建产物，已 gitignore，恢复时用
 `install` 重装（见末节）。
 
-当前以这条路径接入：`dsh-web-mobile`（移动端布局，窄屏 + 粗指针下把三栏 shell
-转成抽屉式布局，桌面细指针任何宽度保持原样）。
+当前以这条路径接入：
+
+- `dsh-web-mobile` —— 移动端布局，窄屏 + 粗指针下把三栏 shell 转成抽屉式布局，桌面细指针任何宽度保持原样。
+- `dsh-ctrl-enter-submit` —— 输入框回车语义：Enter 只换行、Ctrl/Cmd+Enter 发送。实现是在捕获阶段把
+  Enter 事件改写成 Shift+Enter（宿主键位表对 `shiftKey === true` 直接放行给换行），`/`、`@` 菜单打开
+  与输入法组合中不改写。插件本身没有设置项，停用即恢复原生行为。
 
 ### B. 源码 submodule（本仓库原有做法）
 
@@ -60,6 +64,7 @@ dsh plugin --profile web-plus remove <包名>
 | `dsh-web-search-tavily` | Tavily 后端的 `web_search` provider（密钥轮转） |
 | `dsh-web-pwa` | DSH Web 的 PWA 安装元数据：自带光栅图标的 manifest + 让浏览器带凭据取 manifest 的 index tap（上游 manifest 用 `sizes:"any"` 的 SVG，Chrome 解析成 `0x0` 装不上；且取 manifest 时不带 cookie，鉴权反代后面只会拿到登录页） |
 | `dsh-wsjump` | DSH Web 侧栏的工作区面板：检索 / 新建 wsjump 工作区，编辑其标签与描述（元信息写入 `wsmeta.txt`） |
+| `dsh-editor` | 右侧栏文件编辑器（**fork**：[`lilitoweiwei/dsh-editor`](https://github.com/lilitoweiwei/dsh-editor)，上游 `dongasai/dsh_editor` v1.2.0）。官方文档预览只读，它补上「✎ 编辑」/「🗑 删除」按钮、可保存的编辑器页签与自带文件树的「文件编辑」面板；写盘走插件自己的六条 `/workspace-editor/*` Host 路由，带版本闸、工作区包含检查与沙箱策略。包名与客户端 id 为 `@lilitoweiwei/dsh-editor`（不发布 npm，仅本机 submodule + patch 行接入） |
 
 ### 升级插件
 

@@ -8,11 +8,23 @@ importers:
 
   .:
     dependencies:
+      dsh-ctrl-enter-submit:
+        specifier: 1.1.1
+        version: 1.1.1
       dsh-web-mobile:
         specifier: 3.3.5
         version: 3.3.5
 
 packages:
+
+  dsh-ctrl-enter-submit@1.1.1:
+    resolution: {integrity: sha512-PQ/X7Xw69bN1Mcazj14q42FxbXmImUOtCYC2C+LDVmiEt6F5A4goofi+E4XKIPLUxjoGSNwQi6llRNuO8xCEew==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@deepseek-ai/cordis': ^4.0.1
+    peerDependenciesMeta:
+      '@deepseek-ai/cordis':
+        optional: true
 
   dsh-web-mobile@3.3.5:
     resolution: {integrity: sha512-dYEZwDTHpwvFDVZh65U1M8IA8UfaSxW1IJT3uV+YoonQUD1gP00e8+TLrslonzzsA8wsko7/jYXzcGzHAH/sNg==}
@@ -37,5 +49,7 @@ packages:
         optional: true
 
 snapshots:
+
+  dsh-ctrl-enter-submit@1.1.1: {}
 
   dsh-web-mobile@3.3.5: {}

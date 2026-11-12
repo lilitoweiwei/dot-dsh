@@ -6,6 +6,14 @@ DSH 本身的版本升级流水（升到哪一版、回退点在哪）不在这�
 
 ## 0.2.2 时代
 
+### 2026-11-12 — pluszero 扩充工具面
+
+- 加 `time-context`：把"当前时间 / 时区 / 距上条模型可见事件多久"作为消息注入，默认 10 分钟最多一条。不配 `timeZone`（浏览器上报的时区优先，回落进程时区）。
+- 加 `tool-todo`（`todo_write`）：`allowParallelInProgress: false` —— 一次只允许一项进行中，GUI 的「任务」面板能看出卡在哪一步。上游 `standard` 取 `true`，这是刻意的分叉。
+- 加 `tool-schedule`：4 个工具，任务是 Host 级的、可投递到任意会话；Host 的 `schedule` 服务与 GUI 的 Schedule 页本来就在跑，这里只补工具。
+- 加 `tool-office`：技能激活式（加载 `office`/`office-docx`/`office-xlsx`/`office-pptx` 之一后工具才出现），修好此前"技能在目录里、工具不存在"的死胡同。
+- 明确不开：`ask_user_question`（用户习惯自己组织回答，不点选项）、`cordis_inspect_*`、`plan-mode`、`interrupt_agent`、`create_worktree`、terminal 六件套、session-search、plugin-manager/market、`subagent_fork`、workflow/ralph、cua/browser-use；forge bundle（变更请求与工作树）也没装，需要时从插件页一键开。
+
 ### 2026-11-12 — 配置刷新
 
 - **搜索 provider 全部解禁**：删掉对 `web-search-deepseek` 的禁用，`deepseek-search-api`、`deepseek-official`、`tavily` 三项都回到「插件 → 内置插件配置 → 网页搜索与获取设置」的菜单里，可随时切换、立即生效（选择写回 `web` 行，持久化）。当前选择仍是 `tavily`。

@@ -1,6 +1,6 @@
 # ~/.dsh 配置仓库
 
-本仓库管理 DeepSeek Harness（[github.com/deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)）在本机上的运行期配置。当前针对 **v0.2.0-rc.2**（tag `639ed01539` + 本地 patch `08b1192592`，分支 `upgrade/0.2.0-rc.2`）验证，其他版本未经测试。
+本仓库管理 DeepSeek Harness（[github.com/deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)）在本机上的运行期配置。当前针对 **v0.2.2-rc.2**（tag `ddac96760b`，分支 `upgrade/0.2.2-rc.2`，无本地 patch）验证，其他版本未经测试。
 运行这个版本要求 **nodejs.org 的官方 Node 二进制**（不是 nixpkgs 构建的 Node），
 原因与自检命令见 `~/ws/w/20260818-dsh/README.md` 注意事项 10。
 
@@ -11,10 +11,7 @@
 ├── .gitignore          # 排除密钥与运行时数据的规则
 ├── .gitmodules         # 插件 submodule 清单
 ├── plugins/            # 第三方插件（每个插件是一个 git submodule）
-├── profiles/           # dsh profile 定义
-├── .agent-presets/     # 历史遗留：0.1.7 起不再被读取（pluszero 已改为 profile 里的声明式 preset）
-└── settings.yaml.imported  # 历史遗留：0.2.0 首次启动时由 settings.yaml 改名而来；
-                          # 三个 section 已导入 profiles/web-plus/cordis.patch.yml
+└── profiles/           # dsh profile 定义
 ```
 
 ## 管理插件
@@ -67,7 +64,7 @@ dsh plugin --profile web-plus remove <包名>
 
 ## 版本管理规则
 
-**进版本管理**：配置类文件——`profiles/`（含 `profiles/web-plus/cordis.patch.yml`，0.2.0 起的设置与 preset 都在这里）、`.agent-presets/`（历史遗留）、`settings.yaml.imported`（历史遗留）、`plugins/`（submodule）。
+**进版本管理**：配置类文件——`profiles/`（含 `profiles/web-plus/cordis.patch.yml`，0.2.0 起的设置与 preset 都在这里）、`plugins/`（submodule）。
 
 **不进版本管理**（见 `.gitignore`）：
 

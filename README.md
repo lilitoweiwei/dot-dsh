@@ -10,9 +10,14 @@
 ~/.dsh/
 ├── .gitignore          # 排除密钥与运行时数据的规则
 ├── .gitmodules         # 插件 submodule 清单
+├── CHANGELOG.md        # 配置层的变更记录
 ├── plugins/            # 第三方插件（每个插件是一个 git submodule）
 └── profiles/           # dsh profile 定义
 ```
+
+配置层的变更（profile patch 的语义变化、插件接入与升级、settings 迁移）记在
+[`CHANGELOG.md`](CHANGELOG.md)；DSH 本身的版本升级流水见
+`~/ws/w/20260818-dsh/CHANGELOG.md`。
 
 ## 管理插件
 

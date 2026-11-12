@@ -2,77 +2,51 @@
 #
 # Applied after dsh-base and dsh-web-app. Base keeps every seam; web-app
 # disables the tool rows so each session mounts its own agent preset. This
-# layer restates web-provider choices and pins the default agent preset.
+# layer restates the web-provider choices, pins the default agent preset, and
+# mounts this deployment's own plugins.
 #
-# /api 信任名单不在此写死：connection 行沿用 web-app 基础组合的
-# `trustedHosts: !!js ctx.webStartup.trustedHosts`，由各机器服务启动参数
-# --trusted-host 注入（dsh 传 dsh 域名，dshu 传 dshu 域名）。
-# 2026-11-11（升级到 0.2.2-rc.2）：web-app 把 `webRuntime` 服务换成了
-# `webStartup`（同一份 trustedHosts），故 inject 与表达式同步改名。
+# 这个文件是 profile patch 层：对已存在的行是「整段替换 config」。所以覆盖任何
+# 一行，都必须把它原有的键全部重述（见 connection、web 两处的说明）。
 #
-# 2026-09-11（升级到 dsh 0.1.2-rc.1）两处调整：
-#   1. fetch provider `web-fetch-http` 自 0.1.2 起由 dsh-base 自带并插入
-#      （base 的 web 行同时给出 `fetchProvider: http`），本 profile 不再重复
-#      插入，避免重复 id。
-#   2. profile patch 是「整段替换 config」，所以覆盖 `web` 行时必须把 base 的
-#      `fetchProvider: http` 一并重述，否则 web_fetch 会失去显式 provider。
-# 2026-09-12：新增 connection 行覆盖（见文件末尾注释）。
-# 2026-10-10（升级到 dsh 0.2.0-rc.2）三处调整 —— 详见
-#   ~/ws/w/20260929-dsh-version-choice/notes/execution-20261010.md：
-#   1. agent preset 由「目录式」改为「声明式」：老行 id `agent-presets` 整条
-#      失效，须改成 `agent-preset-registry`，并把原来
-#      ~/.dsh/.agent-presets/pluszero/ 的内容逐字声明为一行
-#      `@deepseek-ai/dsh-agent-preset`。不改的后果是默认 preset 静默退回
-#      standard、且带 `agentPreset: pluszero` 的老会话拒绝恢复。
-#   2. 删掉 `- id: modules / inject: [webServer]` 的竞态 workaround（上游已修）。
-#   3. 新增 `session-log-deepseek` 行关闭会话日志上传：0.2.0 把
-#      `enabled` 默认值由 false 改成 true，不关就会在每次官方 API 请求里
-#      附带 `dsh_session_log`（含未进模型的元数据事件）。
+# /api 信任名单不写死：connection 行沿用 web-app 的
+# `trustedHosts: !!js ctx.webStartup.trustedHosts`，权威由各机器服务启动参数
+# --trusted-host 注入（dsha 传 dsha 域名，dshu 传 dshu 域名）。
 
 # Web: 挂载 Tavily search provider（git submodule，源码即入口，无构建）。
-# 2026-09-15：显式设 `searchDepth: basic`。插件默认是 `advanced`（2 credits/请求），
-# basic 为 1 credit/请求且延迟更低；本机免费 key 反复撞 432 额度上限，故降档。
-# 插件不发 `auto_parameters`，所以写死 basic 不会被 Tavily 自动升回 advanced。
-# 备选值 `fast` / `ultra-fast` 存在，但 basic 是"质量/延迟"的官方折中点。
-# 放在 insert 条目自己的 config 里（而非另开一条 id 覆盖行）：patch 对已存在行是
-# 「整段替换 config」，inline 才能保证这一行的配置始终只在一处。
+# `searchDepth: basic` = 1 credit/请求且延迟更低；插件默认是 advanced
+# （2 credits/请求），本机免费 key 反复撞额度上限，故降档。插件不发
+# `auto_parameters`，写死 basic 不会被 Tavily 自动升回 advanced。
+# 配置写在 insert 条目自己身上，让这一行始终只出现在一处。
 - insert:
     - id: web-search-tavily
-      # submodule: ~/.dsh/plugins/dsh-web-search-tavily
-      # 相对 profile 目录 ../../ 上溯两级到 ~/.dsh，再进 plugins/
       name: '../../plugins/dsh-web-search-tavily/src/index.js'
       config:
         searchDepth: basic
 - insert:
     - id: web-pwa
-      # submodule: ~/.dsh/plugins/dsh-web-pwa
-      # 2026-09-22：把 DSH Web 装成手机 PWA 时，上游 manifest 只给一个
-      # `sizes:"any"` 的 SVG 图标（Chrome 解析成 0x0 → 可安装性检查不过），
-      # 且 Chrome 取 manifest 的 fetch 是 credentials: omit（本部署网关对所有
-      # 路径要鉴权 ⇒ 拿到登录页 ⇒ manifest 解析失败）。本插件自带光栅图标，
-      # 并把 index 里的 manifest 链接改指自己的路由（附 crossorigin=
-      # "use-credentials"），取代此前对 apps/web/dist 的手工补丁（那次补丁每次
-      # `pnpm run build:web` 都会丢）。Android WebAPK 冷启动 401 是另一个问题，
-      # 修在网关侧（nginx 同源弹跳），与本插件无关。
       name: '../../plugins/dsh-web-pwa/src/index.js'
       config:
-        # 2026-09-22：上游 manifest 是 `fullscreen`（连 Android 状态栏一起隐藏），
-        # 手机上退回/看时间都要额外手势。`standalone` 同样是"没有浏览器 UI"，
-        # 但保留系统状态栏与系统导航栏 —— 这才是想要的观感。
-        # （插件默认仍是 fullscreen，刻意与上游一致；选哪个模式属部署选择，故写在这里。）
+        # 上游 manifest 只给一个 `sizes:"any"` 的 SVG 图标，Chrome 解析成 0x0 →
+        # 可安装性检查不过；且 Chrome 取 manifest 的 fetch 是 credentials: omit，
+        # 本部署网关对所有路径要鉴权 ⇒ 拿到登录页 ⇒ manifest 解析失败。插件自带
+        # 光栅图标，并把 index 里的 manifest 链接改指自己的路由（附
+        # crossorigin="use-credentials"）。
+        #
+        # 上游 manifest 是 `fullscreen`（连 Android 状态栏一起隐藏），手机上退回/
+        # 看时间都要额外手势。`standalone` 同样"没有浏览器 UI"，但保留系统状态栏
+        # 与系统导航栏 —— 这才是想要的观感。（插件默认仍是 fullscreen；选哪个模式
+        # 属部署选择，故写在这里。）
         display: standalone
 
-# ── Agent preset：声明式（0.2.0 起）──────────────────────────────────────────
+# ── Agent preset：声明式 ─────────────────────────────────────────────────────
 #
-# 0.1.7 起 DSH 不再扫描 `$DSH_HOME/.agent-presets/`：preset 必须由 profile/bundle
-# patch 里的一行 `@deepseek-ai/dsh-agent-preset` 声明。老会话头里记着
+# DSH 不再从 `$DSH_HOME/.agent-presets/` 发现 preset：preset 必须由 patch 里的
+# 一行 `@deepseek-ai/dsh-agent-preset` 声明。老会话头里记着
 # `agentPreset: pluszero`，注册表对缺失定义会拒绝恢复 —— 所以这不是可选项。
 #
 # 注册表（选择 + 代际保留）与声明（标识/元数据/子插件列表）是两个包两行。
-# `plugins:` 下面是原 `~/.dsh/.agent-presets/pluszero/agent.cordis.yml` 的
-# entry list，逐字照搬（含 `!!js` 表达式：声明插件的 group marker 会把它们保留到
-# 各自插件加载时再求值）。
-# 元数据来自同目录 preset.yml：name / description / order。
+# `plugins:` 下面是 preset 的 entry list，可以带 `!!js` 表达式：声明插件的 group
+# marker 会把它们保留到各自插件加载时再求值。
 - id: agent-preset-registry
   name: '@deepseek-ai/dsh-agent-preset-registry'
   config:
@@ -117,14 +91,10 @@
 
           # ── identity ────────────────────────────────────────────────────────────────
 
-          # persona 自 dsh 0.1.5 分为 prefix/suffix。0.2.0 时这里显式写过 suffix，
-          # 理由是「dsh-persona 无条件注册两个 section，不写 suffix 会用空文本把部署级
-          # 那句 working-directory 静默屏蔽掉」。
-          # 2026-11-11（升级到 0.2.2-rc.2）：`{{cwd}}` 变量没了 —— agent-loop 只注册
-          # `provider`/`model`（`cwd` 改由 base 新挂的 working-directory 服务提供），
-          # 留着 suffix 会让每个会话第一条请求就抛
-          # `unknown prompt variable "{{cwd}}"`。上游 standard/ptc/cordis 都已删掉，
-          # 这里跟随：工作目录那句由 working-directory 服务自己注入。
+          # persona 只有 prefix，不写 suffix：agent-loop 只注册 `{{provider}}` /
+          # `{{model}}` 两个 prompt 变量，带 `{{cwd}}` 的 suffix 会让每个会话第一条
+          # 请求就抛 `unknown prompt variable`。工作目录那句由 base 的
+          # working-directory 服务自己注入。
           - id: persona
             name: '@deepseek-ai/dsh-persona'
             config:
@@ -149,8 +119,8 @@
 
           # ── filesystem ──────────────────────────────────────────────────────────────
 
-          # `applyPatch` 默认即 false；显式写出来只为固化（不写也不会凭空多出
-          # apply_patch 工具，但写明可以挡住未来的默认值漂移）。
+          # 不给 apply_patch：schema 默认本就是 false，显式写出来挡住未来的默认值
+          # 漂移，同时把"只要 edit、不要 apply_patch"这个意图留在配置里。
           - id: tool-fs
             name: '@deepseek-ai/dsh-tool-fs'
             config:
@@ -181,16 +151,15 @@
 
           # ── goals（显式排除）─────────────────────────────────────────────────────────
 
-          # 刻意不启用 goal。上游自 0.1.2 起把 `/goal` 命令与 goal 工具都划归 preset 所有：
+          # 刻意不启用 goal。上游把 `/goal` 命令与 goal 工具都划归 preset 所有：
           # `packages/bundle/web-app/cordis.patch.yml` 会把 host 面的 `command-goal` 与
           # `tool-goal` 两行一起禁用（注释原文 "Presets own the human command and
           # model-facing tool"），因此不写这两行 = 本 preset 的会话既没有 `/goal`，也无法
-          # 创建 goal。0.1.1 时代命令还在 host 面、是继承来的；升级到 0.1.5 后它随这次
-          # 平面搬迁一起消失，这是刻意保持的结果，不是漏配。
+          # 创建 goal。
           #
           # 两行以 `disabled: true` 显式列出，只为把"排除"写成可核对的配置（上游对可选
-          # provider 也是这个写法，见 standard 里的 codex/claude-code 行）：Loader 不加载
-          # 它们，preset 的插件清单会把它们显示为 disabled。
+          # provider 也是这个写法）：Loader 不加载它们，preset 的插件清单会把它们显示为
+          # disabled。
           #
           # 要启用就整组启用（同时去掉两行的 `disabled`）：goal 服务与 round-driver 始终
           # 留在 host 面并会自动续跑（默认上限 256 轮），只挂命令不挂工具会让模型不知道
@@ -231,16 +200,15 @@
 
           # One level of subagents only: `maxDepth: 1` forbids a child spawning its own
           # child. No workflow / ralph / fork.
-          # 2026-11-11：`interrupt` 不写就吃默认 true（会多出一个 interrupt_agent 工具），
-          # 与上游 base/三个 shipped preset 的 `false` 分叉。显式对齐上游。
+          # `interrupt` 不写会吃插件默认 true（多出一个 interrupt_agent 工具），与
+          # base 及三个自带 preset 的 false 分叉，故显式对齐。
           - id: tool-subagent-control
             name: '@deepseek-ai/dsh-tool-subagent-control'
             config:
               interrupt: false
 
-          # 2026-11-11：`backgroundMode` 自 0.2.1 起删除（静默忽略）。委派统一成
-          # "托管 activation"：立即返回名字、结果走完成通知 —— 原来 continuable 的
-          # 行为成了唯一行为，所以删键不丢能力。
+          # 委派是「托管 activation」：立即返回名字，结果走完成通知。上游已删除
+          # `backgroundMode` 键（写了也静默忽略），这里不写。
           - id: tool-subagent
             name: '@deepseek-ai/dsh-tool-subagent'
             config:
@@ -258,34 +226,29 @@
               search: true
               fetch: true
               searchTimeoutMs: 60000
-              # 0.2.2 把默认配额从 4 queries / 8 results 提到 10 / 10。Tavily 走
-              # 免费 key + basic 档，一次搜索按 queries 计费，这里显式钉回旧值。
+              # 上游默认是 10 queries / 10 results。Tavily 走免费 key + basic 档，
+              # 一次搜索按 queries 计费，这里显式钉回 4 / 8。
               searchMaxQueries: 4
               searchMaxResults: 8
 
-          # 文件交付（0.1.5-alpha.2 起由 standard/ptc/cordis 挂载）。调用
-          # `present(files: [{path, description?}])` 把已存在的文件声明为交付物，Web 端渲染
-          # 成卡片（点卡片→右侧栏预览；Host 有桌面时才能用默认程序打开）。只记录路径与
-          # 描述：不读内容、不复制、不进模型消息，默认每次最多 8 个文件。
+          # 文件交付：`present(files: [{path, description?}])` 把已存在的文件声明为交付
+          # 物，Web 端渲染成卡片（点卡片→右侧栏预览）。只记录路径与描述：不读内容、
+          # 不复制、不进模型消息，默认每次最多 8 个文件。
           - id: present
             name: '@deepseek-ai/dsh-tool-present'
 
-# Web seam：显式选中 Tavily 作为 web_search 的 provider（确定性选择，
-# 不依赖"唯一可用自动选中"），并重述 base 的 HTTP fetch provider。
+# Web seam：显式选中 Tavily 作为 web_search 的 provider（确定性选择，不依赖
+# "唯一可用自动选中"）。`fetchProvider: http` 必须跟着重述 —— 整段替换 config。
 - id: web
   config:
     searchProvider: tavily
     fetchProvider: http
 
-# 禁用 DeepSeek 官方 search provider：web_search 由 Tavily 提供。
-- id: web-search-deepseek
-  disabled: true
-
-# ── 先读后写防护：显式打开（2026-11-11，0.2.2 升级）─────────────────────────
+# ── 先读后写防护：显式打开 ───────────────────────────────────────────────────
 #
-# base 在 0.2.2 把这个策略改成 `disabled: true` 交付：`write` 直接覆盖、
-# `edit` 直接替换字面文本，"先读后写"的观察校验整体消失。本机的系统提示词
-# 仍在宣称这条约束（工具描述也依赖它），所以这里把行按老行为打开。
+# base 以 `disabled: true` 交付这一行：`write` 直接覆盖、`edit` 直接替换字面文本，
+# "先读后写"的观察校验整体消失。本机的系统提示词仍在宣称这条约束（工具描述也依赖
+# 它），所以这里按老行为打开。
 - id: fs-observation-policy
   disabled: false
 
@@ -294,12 +257,9 @@
 # 的首次交换时需要；cookie 跨进程重启有效，签名密钥持久化在 credentials 的
 # client-connection/browser-session）。
 #
-# 语义提示：profile patch 是「整段替换 config」，所以必须把 web-app 原有的
-# `trustedHosts` 表达式与 `inject` 一起重述，否则信任围栏会失效、表达式也不再解析。
-#
-# 2026-11-11（升级到 0.2.2-rc.2）：`webRuntime` 服务已由 `webStartup` 取代。
-# 不改的表现是最难查的一种：该行等一个永不挂载的服务，Web UI 根本不启动。
-# `cookieMaxAgeDays` 必须一起重述（整段替换 config）。
+# 必须整行重述：patch 是「整段替换 config」。漏掉 `inject` 会让这行等一个永不挂载
+# 的服务，Web UI 根本不启动；漏掉 `trustedHosts` 会让域名进不了 /api 围栏，
+# 所有请求 403。
 - id: connection
   name: '@deepseek-ai/dsh-client-connection'
   inject: [ webStartup ]
@@ -307,21 +267,15 @@
     trustedHosts: !!js ctx.webStartup.trustedHosts
     cookieMaxAgeDays: 365
 
-# ── 会话日志上传：显式关闭（2026-10-10，0.2.0 升级）─────────────────────────
+# ── 会话日志上传：显式关闭 ───────────────────────────────────────────────────
 #
 # `@deepseek-ai/dsh-session-log-deepseek` 会把「规范会话日志的增量事件」作为
 # `dsh_session_log` 字段附在每个走官方 DeepSeek API 的请求上（含未进模型的元数据
 # 事件，如 sandbox/mode、approval/policy、permission/preset、workspace/changes、
 # compaction/prune，以及已被 compaction 剪除的历史；上游代码里没有脱敏）。
+# schema 默认是 `enabled: true`，所以必须显式关。
 #
-# 0.1.5 的默认值是 `enabled: false`（本机 125 个会话里没有任何
-# `session-log-deepseek/delivery-accepted` 事件，即确实从未上传）；**0.2.0 把默认值
-# 改成了 `true`**（`packages/session/session-log-deepseek/src/index.ts`：
-# `enabled: z.boolean().default(true).volatile()`）。
-#
-# 本行把 enabled 钉在 profile patch（= GUI 写入的那一层）里，因此
-# 设置 → 通用 的开关不再能把它打开（home patch/命令行覆盖优先级更高，
-# 但 profile patch 会被 GUI 的配置编辑器改写 —— 若日后要改，改这一行即可）。
+# 本行在 profile patch（= GUI 写入的那一层）：设置 → 通用 的开关不再能把它打开。
 # 验收方式：新会话里不出现 `session-log-deepseek/delivery-accepted` 事件。
 - id: session-log-deepseek
   name: '@deepseek-ai/dsh-session-log-deepseek'
@@ -333,11 +287,11 @@
     providers:
       opencode-go:
         apiKeyEnv: OPENCODE_GO_API_KEY
-        # 2026-11-10：内置目录（pi-ai 0.87.1，源自 models.dev）把 deepseek-v4.1-flash 的
-        # off 标为不支持（efforts 只有 low/high/max），于是 DSH 的选择器里没有 Off。
-        # 这里只重塑这一个模型：显式声明四级。off 留空 = 支持且不发送推理字段，
-        # thinkingFormat: deepseek 的分派据此发出 thinking:{type:"disabled"}。
-        # 是否真被网关接受待实测；不生效就删掉这几行，改回继承目录。
+        # 内置目录把 deepseek-v4.1-flash 的 off 判为不支持（目录数据
+        # `thinkingLevelMap.off = null`，而 `getSupportedThinkingLevels` 把 null 读成
+        # 不支持，见 packages/llm/llm-pi-ai/src/models.ts），于是选择器里没有 Off。
+        # 这里只重塑这一个模型，显式声明四级：off 留空 = 支持且不发送推理字段，
+        # `thinkingFormat: deepseek` 的分派据此发出 thinking:{type:"disabled"}。
         modelOverrides:
           deepseek-v4.1-flash:
             reasoningEfforts:
@@ -351,10 +305,13 @@
     provider: opencode-go
     model: deepseek-v4.1-flash
     reasoningEffort: high
+# 欢迎公告的「最后确认版本」：与源码常量 WELCOME_NOTICE_VERSION 精确相等才算已读，
+# 所以值等于当前常量就表示看过最新公告。GUI 在你点掉公告时把新值写回这里。
 - id: ui-settings-general
   name: "@deepseek-ai/dsh-client-ui-settings-general"
   config:
     welcomeNoticeVersion: 2026-09-28.1
+# 正文字号 15（默认 14）；代码块与终端的字号保持默认（11 / 13）。
 - id: ui-theme
   name: "@deepseek-ai/dsh-client-ui-theme"
   config:
@@ -363,9 +320,8 @@
 # ── dsh-wsjump：侧栏工作区面板（submodule plugins/dsh-wsjump）────────────────
 #
 # 入口指向构建产物 lib/index.js（lib/ 不进版本管理，构建与挂载细节见插件 README）。
-# wsjumpPath 显式写成绝对路径：服务进程的 PATH 不保证包含 ~/ws/bin。
+# 二进制走 PATH 里的 `wsjump`（~/ws/bin 由 home-manager sessionPath 注入），插件
+# 本身默认就按裸名解析并顺带找回配置文件，故不需要 wsjumpPath。
 - insert:
     - id: dsh-wsjump
       name: '../../plugins/dsh-wsjump/lib/index.js'
-      config:
-        wsjumpPath: '/home/supplient/ws/bin/wsjump'

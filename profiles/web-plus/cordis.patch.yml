@@ -147,12 +147,11 @@
 
           # 会话内任务清单（`todo_write`）。GUI 的「任务」面板由 ui-conversation 挂载，
           # 步骤多时能直接看到进度。`allowParallelInProgress` 是必填键（没有默认值），
-          # 这里取 false：一次只允许一项进行中，面板里始终能看出"现在卡在哪一步"。
-          # （上游 standard 取 true，允许并行推进多项。）
+          # 取 true：允许同时推进多项（与上游 standard 一致）。
           - id: tool-todo
             name: '@deepseek-ai/dsh-tool-todo'
             config:
-              allowParallelInProgress: false
+              allowParallelInProgress: true
 
           # 定时任务四件套（`schedule_create/list/view/edit`）。任务属于 Host 而不属于
           # 某个会话：创建时用 `target` 选投递目标（this_session / new_once / new）。

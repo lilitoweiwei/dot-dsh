@@ -300,10 +300,17 @@
             inject: [ credentials ]
             config:
               serverName: tencent-lbs
-              transport: streamable-http
-              url: https://mcp.map.qq.com/mcp?key=${credential:TENCENT_MAP_KEY}
+              transport: stdio
+              command: uv
+              args:
+                - run
+                - --project
+                - !!js process.env.HOME + "/.dsh/plugins/tencent-map-mcp"
+                - tencent-map-mcp
+              env:
+                TENCENT_MAP_KEY: '${credential:TENCENT_MAP_KEY}'
               expandTemplates: true
-              startupTimeoutMs: 30000
+              startupTimeoutMs: 60000
 
 # Web seam：显式选中 Tavily 作为 web_search 的 provider（确定性选择，不依赖
 # "唯一可用自动选中"）。`fetchProvider: http` 必须跟着重述 —— 整段替换 config。

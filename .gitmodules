@@ -13,3 +13,6 @@
 [submodule "plugins/dsh-image-gen"]
 	path = plugins/dsh-image-gen
 	url = git@github.com:lilitoweiwei/dsh-image-gen.git
+[submodule "plugins/tencent-map-mcp"]
+	path = plugins/tencent-map-mcp
+	url = git@github.com:lilitoweiwei/tencent-map-mcp.git

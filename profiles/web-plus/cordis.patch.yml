@@ -60,7 +60,7 @@
       config:
         id: pluszero
         name: PlusZero（加灵）
-        description: 系统管理 Agent：一次性 Bash、文件、网页获取、技能、一层子代理，带沙盒提权。
+        description: 通用Agent，回应用户的一切需求。
         order: 1
         plugins:
           # The `pluszero` agent preset: the PlusZero (加灵) system-management agent.
@@ -278,6 +278,33 @@
           - id: present
             name: '@deepseek-ai/dsh-tool-present'
 
+          # ── 地图 MCP ────────────────────────────────────────────────────────────────
+
+          # 腾讯位置服务 MCP（远程 Streamable HTTP）。挂在本 preset 而不是 profile 的
+          # `mcp-manager`，是为了让 MCP 工具只属于命名它的 agent：`subone` 没挂这一行，
+          # 就天然看不到这 15 个工具。mcp-client 在空作用域下不注册任何工具，正是这个
+          # 语义 —— 所以"排除"不需要黑名单插件，只要不写。
+          #
+          # `expandTemplates: true` 必须显式写：mcp-client 的默认值是 false
+          # （mcp-manager 内部是写死 true 的）。漏了它，`${credential:…}` 会被当成
+          # URL 的普通字符发出去，服务器返回 Invalid Key，而日志里看不出原因。
+          #
+          # `inject: [ credentials ]` 是顺序保证：mcp-client 在构造期就用
+          # `ctx.get('credentials')` 取提供方，取不到会直接抛
+          # "MCP credential templates require a credentials provider"。
+          #
+          # Key 来源：sops → 环境变量 TENCENT_MAP_KEY（homes/dshu/tencent-map.nix）；
+          # credentials-local 的解析顺序里"继承的进程环境变量"排第二。
+          - id: mcp-tencent-lbs
+            name: '@deepseek-ai/dsh-mcp-client'
+            inject: [ credentials ]
+            config:
+              serverName: tencent-lbs
+              transport: streamable-http
+              url: https://mcp.map.qq.com/mcp?key=${credential:TENCENT_MAP_KEY}
+              expandTemplates: true
+              startupTimeoutMs: 30000
+
 # Web seam：显式选中 Tavily 作为 web_search 的 provider（确定性选择，不依赖
 # "唯一可用自动选中"）。`fetchProvider: http` 必须跟着重述 —— 整段替换 config。
 - id: web
@@ -340,12 +367,6 @@
               low: low
               high: high
               max: max
-- id: agent-default-model
-  name: "@deepseek-ai/dsh-agent-default-model"
-  config:
-    provider: opencode-go
-    model: deepseek-v4.1-flash
-    reasoningEffort: high
 # 欢迎公告的「最后确认版本」：与源码常量 WELCOME_NOTICE_VERSION 精确相等才算已读，
 # 所以值等于当前常量就表示看过最新公告。GUI 在你点掉公告时把新值写回这里。
 - id: ui-settings-general
@@ -379,3 +400,9 @@
 - insert:
     - id: dsh-editor
       name: '../../plugins/dsh-editor/index.js'
+- id: agent-default-model
+  name: "@deepseek-ai/dsh-agent-default-model"
+  config:
+    provider: opencode-go
+    model: deepseek-v4.1-flash
+    reasoningEffort: high

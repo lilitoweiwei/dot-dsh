@@ -7,12 +7,14 @@
         "@deepseek-ai/dsh-base",
         "@deepseek-ai/dsh-web-app",
         "dsh-web-mobile",
-        "dsh-ctrl-enter-submit"
+        "dsh-ctrl-enter-submit",
+        "dsh-my-agent-preset"
       ]
     }
   },
   "dependencies": {
     "dsh-ctrl-enter-submit": "1.1.1",
+    "dsh-my-agent-preset": "link:/home/supplient/.dsh/plugins/dsh-my-agent-preset",
     "dsh-web-mobile": "3.3.5"
   }
 }

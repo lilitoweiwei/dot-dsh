@@ -11,6 +11,9 @@ importers:
       dsh-ctrl-enter-submit:
         specifier: 1.1.1
         version: 1.1.1
+      dsh-my-agent-preset:
+        specifier: link:/home/supplient/.dsh/plugins/dsh-my-agent-preset
+        version: link:../../plugins/dsh-my-agent-preset
       dsh-web-mobile:
         specifier: 3.3.5
         version: 3.3.5

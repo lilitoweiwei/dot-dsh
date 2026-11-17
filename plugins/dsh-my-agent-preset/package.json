@@ -1,0 +1,15 @@
+{
+  "name": "dsh-my-agent-preset",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A bundle layer that declares my agent presets.",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "dsh-image-gen": "link:../dsh-image-gen"
+  }
+}

@@ -10,3 +10,6 @@
 [submodule "plugins/dsh-editor"]
 	path = plugins/dsh-editor
 	url = git@github.com:lilitoweiwei/dsh-editor.git
+[submodule "plugins/dsh-image-gen"]
+	path = plugins/dsh-image-gen
+	url = git@github.com:lilitoweiwei/dsh-image-gen.git

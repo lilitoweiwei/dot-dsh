@@ -407,6 +407,19 @@
 - insert:
     - id: dsh-editor
       name: '../../plugins/dsh-editor/index.js'
+# ── dsh-webui-location：位置信息（submodule plugins/dsh-webui-location）────────
+#
+# 输入框 + 菜单里一行「位置信息」：点击后向浏览器请求一次高精度定位，把坐标、
+# 误差半径与读取时间写成一行文本插入到光标处（不替换已有内容）。纯浏览器半边，
+# 本行挂载的 Host 入口只是空桩——浏览器半边由 dsh-client-modules 从 package.json
+# 的 dsh.client 发现，故包名与 lib/client.js 里的 id 必须一致。
+#
+# 生效方式：本目录在 HMR 监视集内，新装/摘除本行即宿主热应用；插件自身的 lib/
+# 改动由 client-hmr 轮询热替换。
+- insert:
+    - id: webui-location
+      name: '../../plugins/dsh-webui-location/lib/index.js'
+
 - id: agent-default-model
   name: "@deepseek-ai/dsh-agent-default-model"
   config:

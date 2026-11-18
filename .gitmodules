@@ -16,3 +16,6 @@
 [submodule "plugins/tencent-map-mcp"]
 	path = plugins/tencent-map-mcp
 	url = git@github.com:lilitoweiwei/tencent-map-mcp.git
+[submodule "plugins/dsh-webui-location"]
+	path = plugins/dsh-webui-location
+	url = git@github.com:lilitoweiwei/dsh-webui-location.git

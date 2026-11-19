@@ -9,31 +9,31 @@ importers:
   .:
     dependencies:
       '@lilitoweiwei/dsh-editor':
-        specifier: link:/home/supplient/.dsh/plugins/dsh-editor
+        specifier: link:../../plugins/dsh-editor
         version: link:../../plugins/dsh-editor
       '@lilitoweiwei/dsh-web-pwa':
-        specifier: link:/home/supplient/.dsh/plugins/dsh-web-pwa
+        specifier: link:../../plugins/dsh-web-pwa
         version: link:../../plugins/dsh-web-pwa
       '@lilitoweiwei/dsh-web-search-tavily':
-        specifier: link:/home/supplient/.dsh/plugins/dsh-web-search-tavily
+        specifier: link:../../plugins/dsh-web-search-tavily
         version: link:../../plugins/dsh-web-search-tavily
       dsh-ctrl-enter-submit:
         specifier: 1.1.1
         version: 1.1.1
       dsh-image-gen:
-        specifier: link:/home/supplient/.dsh/plugins/dsh-image-gen
+        specifier: link:../../plugins/dsh-image-gen
         version: link:../../plugins/dsh-image-gen
       dsh-my-agent-preset:
-        specifier: link:/home/supplient/.dsh/plugins/dsh-my-agent-preset
+        specifier: link:../../plugins/dsh-my-agent-preset
         version: link:../../plugins/dsh-my-agent-preset
       dsh-web-mobile:
         specifier: 3.3.5
         version: 3.3.5
       dsh-webui-location:
-        specifier: link:/home/supplient/.dsh/plugins/dsh-webui-location
+        specifier: link:../../plugins/dsh-webui-location
         version: link:../../plugins/dsh-webui-location
       dsh-wsjump:
-        specifier: link:/home/supplient/.dsh/plugins/dsh-wsjump
+        specifier: link:../../plugins/dsh-wsjump
         version: link:../../plugins/dsh-wsjump
 
 packages:

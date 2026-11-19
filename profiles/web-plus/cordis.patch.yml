@@ -297,7 +297,7 @@
               args:
                 - run
                 - --project
-                - !!js process.env.HOME + "/.dsh/plugins/tencent-map-mcp"
+                - !!js (process.env.DSH_HOME ?? process.env.HOME + "/.dsh") + "/plugins/tencent-map-mcp"
                 - tencent-map-mcp
               env:
                 TENCENT_MAP_KEY: '${credential:TENCENT_MAP_KEY}'

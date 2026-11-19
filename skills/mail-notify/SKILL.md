@@ -9,7 +9,7 @@ description: 给用户发邮件（163 SMTP → 用户邮箱）。当内容超过
 `~/.config/sops-nix/secrets/rendered/mail.env`，脚本自己读，不需要 source。
 
 ```bash
-P=~/.dsh/skills/mail-notify/mailme.py
+P="${DSH_HOME:-$HOME/.dsh}/skills/mail-notify/mailme.py"
 ```
 
 ## 基本调用

@@ -1,13 +1,22 @@
-# ~/.dsh 配置仓库
+# DSH 配置仓库（dsh-home）
 
 本仓库管理 DeepSeek Harness（[github.com/deepseek-ai/deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)）在本机上的运行期配置。当前针对 **v0.2.2-rc.2**（tag `ddac96760b`，分支 `upgrade/0.2.2-rc.2`，无本地 patch）验证，其他版本未经测试。
 运行这个版本要求 **nodejs.org 的官方 Node 二进制**（不是 nixpkgs 构建的 Node），
 原因与自检命令见 `~/ws/w/20260818-dsh/README.md` 注意事项 10。
 
+## 位置
+
+本仓库**就是** DSH 的数据根（`$DSH_HOME`）：2026-11-19 从 `~/.dsh` 搬到
+`~/ws/w/20260818-dsh/dsh-home`，与同目录的 DSH checkout、运维文档集中在一个工作区里。
+路径由 nixos 的 `homes/dshu/default.nix` 里那条 `sessionVariables.DSH_HOME` 决定
+（home-manager 会话变量，服务的 `bash -lc` 与交互 shell 都从它继承）。
+
+本文档中 `$DSH_HOME` 一律指这个仓库的根；改名/再搬迁只需要改 nix 里那一行。
+
 ## 仓库布局
 
 ```
-~/.dsh/
+$DSH_HOME/
 ├── .gitignore          # 排除密钥与运行时数据的规则
 ├── .gitmodules         # 插件 submodule 清单
 ├── CHANGELOG.md        # 配置层的变更记录
@@ -51,7 +60,7 @@ dsh plugin --profile web-plus remove <包名>
 `dsh.profile.bundles`，然后包内的 patch 自己插那一行：
 
 ```bash
-dsh plugin --profile web-plus add ~/.dsh/plugins/<name>
+dsh plugin --profile web-plus add "$DSH_HOME/plugins/<name>"
 ```
 
 于是「一个插件的配置」跟着它自己的仓库走，profile 的 `cordis.patch.yml` 里不再有它们的行；
@@ -69,7 +78,8 @@ dsh plugin --profile web-plus add ~/.dsh/plugins/<name>
 | `dsh-image-gen` | `image_gen` / `image_prompt_guide` 两个图像生成工具。**唯一的例外**：它插的是 host 平面的 `image-gen-gate` 服务，工具行反而挂在 preset 里（`pluszero` 与 `subone`），工具只在那个 preset 的会话里出现 | `image-gen-gate` |
 
 > `tencent-map-mcp` 是个例外：它不是 npm 包，没有 `package.json`，由 `pluszero` preset 里的一行
-> `mcp-client` 用 `uv run --project` 拉起（路径写死在那一行里）。它没有 bundle 形态。
+> `mcp-client` 用 `uv run --project` 拉起（路径以 `$DSH_HOME` 为根，见 profile patch 的
+> `mcp-tencent-lbs` 行）。它没有 bundle 形态。
 
 ### 升级插件
 
@@ -94,10 +104,13 @@ dsh plugin --profile web-plus add ~/.dsh/plugins/<name>
 ## 恢复环境
 
 ```bash
-git clone git@github.com:lilitoweiwei/dot-dsh.git ~/.dsh
-git -C ~/.dsh submodule update --init --recursive
+# 本机的位置；恢复到别处就改这一行，并同步 nixos 里 sessionVariables.DSH_HOME 的值
+export DSH_HOME="$HOME/ws/w/20260818-dsh/dsh-home"
+
+git clone git@github.com:lilitoweiwei/dot-dsh.git "$DSH_HOME"
+git -C "$DSH_HOME" submodule update --init --recursive
 # 安装 profile 的 npm 依赖：以 npm 包路径接入的插件实体不入版本管理
-pnpm --dir ~/.dsh/profiles/web-plus install
+pnpm --dir "$DSH_HOME/profiles/web-plus" install
 ```
 
 随后按常规方式启动 dsh 服务即可，模块 fallback 会在启动时自动重建。

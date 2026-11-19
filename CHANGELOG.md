@@ -1,17 +1,40 @@
 # CHANGELOG
 
-`~/.dsh` 配置仓库的变更记录：profile patch 的语义变化、插件接入与升级、settings 迁移、submodule 冻结点。
+配置仓库的变更记录：profile patch 的语义变化、插件接入与升级、settings 迁移、submodule 冻结点。
+仓库根就是 DSH 的数据根（`$DSH_HOME`），本机自 2026-11-19 起在 `~/ws/w/20260818-dsh/dsh-home`（原 `~/.dsh`）。
 
 DSH 本身的版本升级流水（升到哪一版、回退点在哪）不在这里，见 `~/ws/w/20260818-dsh/CHANGELOG.md`。
 
 ## 0.2.2 时代
+
+### 2026-11-19 — 数据根迁到工作区：`~/.dsh` → `~/ws/w/20260818-dsh/dsh-home`
+
+把整个数据根（profile、插件 submodule、会话、附件、技能、凭据）搬进 DSH 工作区，让源码 checkout、
+运维文档、配置仓库、运行数据集中在一处。
+
+- **位置由环境变量决定**：nixos 的 `homes/dshu/default.nix` 显式声明
+  `sessionVariables.DSH_HOME`（home-manager 会话变量，服务的 `bash -lc` 与交互 shell 都继承它）。
+  以前全靠 `home-paths` 的默认值 `~/.dsh` 隐式约定。
+- **顺带消掉配置里的绝对路径**（先改相对路径、再搬迁，避免搬迁时混合两类失败）：
+  profile 的 7 条 `link:` 依赖改成 `link:../../plugins/<name>`（pnpm 相对 profile 目录解析，锁文件的
+  specifier 同步重新生成）；`mcp-tencent-lbs` 行的 `uv run --project` 改成以 `$DSH_HOME` 为根、
+  只在没有该变量时回退 `$HOME/.dsh`；`skills/mail-notify/SKILL.md` 里写死的脚本路径改用
+  `${DSH_HOME:-$HOME/.dsh}`。
+- **不在路径里的两处配套**：外层工作区 `.gitignore` 加 `/dsh-home/`（数据根本身是独立仓库
+  `dot-dsh`）；`tencent-map-mcp` 的 `.venv` 里是绝对路径的 shebang 与 `.pth`，搬迁后删掉让
+  `uv run` 重建。
+- **为什么叫 `dsh-home` 而不是 `.dsh`**：`skill-filesystem` 会把 `<cwd 的 git 根>/.dsh/skills` 当项目
+  技能根；若数据根叫 `<git 仓库>/.dsh`，它与全局根 `$DSH_HOME/skills` 就是同一目录，会以「项目技能」
+  的身份重复扫描同一批文件。`dsh-home` 让两者永不重合。
+- **验证**：搬迁后冷启动零告警（`--dump-config` exit 0 / stderr 0 行），会话、附件、技能、腾讯地图
+  MCP、`image_gen`、Plugins 页 11 层 bundle 全部正常；旧会话可恢复（会话记录存的是工作区路径）。
 
 ### 2026-11-19 — 插件 bundle 化：配置跟着插件仓库走
 
 把「插件行写在 profile patch 里」改成「每个插件自己是一个 bundle」。profile 的
 `cordis.patch.yml` 只剩必须压过所有 bundle 的行（preset 声明、默认模型、会话日志）与设置页会
 回写的 UI 偏好行。五个插件补上 `dsh.bundle.patch` + 自己的 `cordis.patch.yml`，用
-`dsh plugin --profile web-plus add ~/.dsh/plugins/<name>` 装成 `link:` 依赖并追加进
+`dsh plugin --profile web-plus add "$DSH_HOME/plugins/<name>"` 装成 `link:` 依赖并追加进
 `dsh.profile.bundles`：
 
 | bundle | 带来的行 |
@@ -50,7 +73,7 @@ DSH 本身的版本升级流水（升到哪一版、回退点在哪）不在这�
 - **为什么 fork**：后续要按本机习惯改造（编辑器形态、面板入口等），fork 保留上游 remote 便于合并；
   上游 npm 包名留在别人 scope 下，改了 id 才能与「路径 B」的挂载方式对齐。
 - **生效方式**：两条都是热装载（HMR 重组 profile 组合），host 未重启；浏览器硬刷新一次。
-  唯独改插件 `index.js` 的内容需要重启 `dsh-web`（`~/.dsh/plugins/` 不在 HMR 监视集内）。
+  唯独改插件 `index.js` 的内容需要重启 `dsh-web`（`$DSH_HOME/plugins/` 不在 HMR 监视集内）。
 - **fork 首个行为改动（fbc03bf）**：删掉 `dsh-editor` 预览头部的「✎ 编辑」按钮 —— 它把预览
   页签换成编辑器页签（`replaceTab`），而那个页签没有任何回预览的入口，只能关掉重开；官方
   预览的「打开方式」下拉本来就能在 Markdown/代码 与「编辑器」之间可逆切换，故编辑只留下拉

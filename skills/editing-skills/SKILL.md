@@ -16,7 +16,7 @@ Roots are scanned in this rank order (lower rank wins a name conflict):
 | 100 | `<projectRoot>/.dsh/skills` | one project's skills; projectRoot is the nearest ancestor with `.git`, else the session cwd |
 | 200 | `<projectRoot>/.agents/skills` | project-scoped, shared-agent variant |
 | 300 | `customSkillDirs` (preset config) | skills that travel with a preset (cordis pattern, `baseUrl`-relative) |
-| 400 | `<dshHome>/skills` (`~/.dsh/skills`) | **default choice**: personal skills visible to every skill-enabled preset |
+| 400 | `<dshHome>/skills` (`$DSH_HOME/skills`) | **default choice**: personal skills visible to every skill-enabled preset |
 | 500 | `<agentsHome>/skills` (`~/.agents/skills`) | machine-shared agent skills |
 | 600 | `$DSH_BUNDLED_SKILL_DIR` | app-bundled skills (unset on this machine) |
 

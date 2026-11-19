@@ -8,8 +8,5 @@
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
-  },
-  "dependencies": {
-    "dsh-image-gen": "link:../dsh-image-gen"
   }
 }

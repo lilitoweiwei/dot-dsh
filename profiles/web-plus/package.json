@@ -8,13 +8,25 @@
         "@deepseek-ai/dsh-web-app",
         "dsh-web-mobile",
         "dsh-ctrl-enter-submit",
-        "dsh-my-agent-preset"
+        "dsh-my-agent-preset",
+        "@lilitoweiwei/dsh-web-search-tavily",
+        "@lilitoweiwei/dsh-web-pwa",
+        "dsh-wsjump",
+        "@lilitoweiwei/dsh-editor",
+        "dsh-webui-location",
+        "dsh-image-gen"
       ]
     }
   },
   "dependencies": {
+    "@lilitoweiwei/dsh-editor": "link:/home/supplient/.dsh/plugins/dsh-editor",
+    "@lilitoweiwei/dsh-web-pwa": "link:/home/supplient/.dsh/plugins/dsh-web-pwa",
+    "@lilitoweiwei/dsh-web-search-tavily": "link:/home/supplient/.dsh/plugins/dsh-web-search-tavily",
     "dsh-ctrl-enter-submit": "1.1.1",
+    "dsh-image-gen": "link:/home/supplient/.dsh/plugins/dsh-image-gen",
     "dsh-my-agent-preset": "link:/home/supplient/.dsh/plugins/dsh-my-agent-preset",
-    "dsh-web-mobile": "3.3.5"
+    "dsh-web-mobile": "3.3.5",
+    "dsh-webui-location": "link:/home/supplient/.dsh/plugins/dsh-webui-location",
+    "dsh-wsjump": "link:/home/supplient/.dsh/plugins/dsh-wsjump"
   }
 }

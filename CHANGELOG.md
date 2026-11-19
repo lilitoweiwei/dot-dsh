@@ -6,6 +6,37 @@ DSH 本身的版本升级流水（升到哪一版、回退点在哪）不在这�
 
 ## 0.2.2 时代
 
+### 2026-11-19 — 插件 bundle 化：配置跟着插件仓库走
+
+把「插件行写在 profile patch 里」改成「每个插件自己是一个 bundle」。profile 的
+`cordis.patch.yml` 只剩必须压过所有 bundle 的行（preset 声明、默认模型、会话日志）与设置页会
+回写的 UI 偏好行。五个插件补上 `dsh.bundle.patch` + 自己的 `cordis.patch.yml`，用
+`dsh plugin --profile web-plus add ~/.dsh/plugins/<name>` 装成 `link:` 依赖并追加进
+`dsh.profile.bundles`：
+
+| bundle | 带来的行 |
+|---|---|
+| `@lilitoweiwei/dsh-web-search-tavily` | `web-search-tavily`（`searchDepth: basic`）+ 覆盖 `web`（`searchProvider: tavily` / `fetchProvider: http`） |
+| `@lilitoweiwei/dsh-web-pwa` | `web-pwa`（`display: standalone`） |
+| `dsh-wsjump` | `dsh-wsjump` |
+| `@lilitoweiwei/dsh-editor` | `workspace-editor`（改用包自带的层，profile 里手写的 `dsh-editor` 行删掉） |
+| `dsh-webui-location` | `webui-location` |
+| `dsh-image-gen` | `image-gen-gate`（host 平面的**开关服务**，不提供工具） |
+
+- **`dsh-image-gen` 的形态**：工具行仍然挂在 preset（`pluszero` / `subone`），但这包现在声明
+  `dsh.bundle`，其补丁只插一个很薄的 host 服务 `imageGenGate`；`src/index.js` 的 `inject` 加了这个
+  服务。于是「Plugins 页关掉这个 bundle」= 服务消失 = 两个工具从所有 preset 的会话里退出。bundle
+  不能改别的 preset 的内部，这是它能拥有的全部杠杆。依赖关系同步简化：`dsh-my-agent-preset` 不再
+  以 `link:` 依赖携带 `dsh-image-gen`，改由 profile 提供。
+- **兼容声明**：`dsh-wsjump` / `dsh-webui-location` / `@lilitoweiwei/dsh-editor` / `dsh-image-gen`
+  补了 `engines.dsh: ">=0.2.0 <0.3.0"`（此前一条也没声明，升级 DSH 时会被静默放过）。
+  `dsh-web-pwa` / `dsh-web-search-tavily` 已有 `@deepseek-ai/dsh*` peer 范围，保持不动。
+- **注释修正**：删掉 `session-log-deepseek` 那句「本行在 profile patch，设置页的开关不再能把它打开」
+  —— 设置页写盘就是往 profile patch 的同一行写，那个结论站不住；只是我们没打算上锁，不需要额外说明。
+- **代价（实测）**：bundle 的补丁文件**不在** HMR 的 watch 列表里（HMR 只 watch profile patch /
+  home patch / profile manifest）。改 bundle 的 `cordis.patch.yml` 不会自己热生效，保存一次 profile
+  patch 触发重组或重启即可。
+
 ### 2026-11-12 — 回车语义插件 + 工作区文件编辑器（fork）
 
 - **新增 `dsh-ctrl-enter-submit@1.1.1`**（路径 A，npm）：Enter 只换行、Ctrl/Cmd+Enter 发送。做法是在

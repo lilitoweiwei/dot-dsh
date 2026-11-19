@@ -70,9 +70,11 @@
           # ── image generation ────────────────────────────────────────────────────────
           #
           # 两个工具：`image_gen` 出图、`image_prompt_guide` 给提示词规范。本体是独立私有
-          # 仓库 `dsh-image-gen`（plugins/dsh-image-gen），由本 preset 的 package.json 以
-          # link: 依赖引入。**不要**把它加到 profile 的 patch 里：那是 host 平面，一旦
-          # 挂上，所有 agent（含 pluszero）都会看到这两个工具。
+          # 仓库 `dsh-image-gen`（plugins/dsh-image-gen），由 profile 以 bundle 形式选中；
+          # 那个 bundle 插的是 host 平面的 `imageGenGate` 服务，本行 inject 它 —— 把 bundle
+          # 关掉，本行就等一个不存在的服务，两个工具随之消失。
+          # **不要**把工具行加到 profile 的 patch 里：那是 host 平面，一旦挂上，所有 agent
+          # 都会看到这两个工具。
           - id: image-gen
             name: 'dsh-image-gen'
 

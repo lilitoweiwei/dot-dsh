@@ -1,42 +1,24 @@
 # web-plus profile: the PlusZero (加灵) system-management surface.
 #
 # Applied after dsh-base and dsh-web-app. Base keeps every seam; web-app
-# disables the tool rows so each session mounts its own agent preset. This
+# disables the tool rows so each session's agent preset owns the tool list. This
 # layer restates the web-provider choices, pins the default agent preset, and
-# mounts this deployment's own plugins.
+# keeps the rows that must outrank every bundle.
 #
 # 这个文件是 profile patch 层：对已存在的行是「整段替换 config」。所以覆盖任何
-# 一行，都必须把它原有的键全部重述（见 connection、web 两处的说明）。
+# 一行，都必须把它原有的键全部重述（见 connection 行的说明）。
 #
 # /api 信任名单不写死：connection 行沿用 web-app 的
 # `trustedHosts: !!js ctx.webStartup.trustedHosts`，权威由各机器服务启动参数
 # --trusted-host 注入（dsha 传 dsha 域名，dshu 传 dshu 域名）。
 
-# Web: 挂载 Tavily search provider（git submodule，源码即入口，无构建）。
-# `searchDepth: basic` = 1 credit/请求且延迟更低；插件默认是 advanced
-# （2 credits/请求），本机免费 key 反复撞额度上限，故降档。插件不发
-# `auto_parameters`，写死 basic 不会被 Tavily 自动升回 advanced。
-# 配置写在 insert 条目自己身上，让这一行始终只出现在一处。
-- insert:
-    - id: web-search-tavily
-      name: '../../plugins/dsh-web-search-tavily/src/index.js'
-      config:
-        searchDepth: basic
-- insert:
-    - id: web-pwa
-      name: '../../plugins/dsh-web-pwa/src/index.js'
-      config:
-        # 上游 manifest 只给一个 `sizes:"any"` 的 SVG 图标，Chrome 解析成 0x0 →
-        # 可安装性检查不过；且 Chrome 取 manifest 的 fetch 是 credentials: omit，
-        # 本部署网关对所有路径要鉴权 ⇒ 拿到登录页 ⇒ manifest 解析失败。插件自带
-        # 光栅图标，并把 index 里的 manifest 链接改指自己的路由（附
-        # crossorigin="use-credentials"）。
-        #
-        # 上游 manifest 是 `fullscreen`（连 Android 状态栏一起隐藏），手机上退回/
-        # 看时间都要额外手势。`standalone` 同样"没有浏览器 UI"，但保留系统状态栏
-        # 与系统导航栏 —— 这才是想要的观感。（插件默认仍是 fullscreen；选哪个模式
-        # 属部署选择，故写在这里。）
-        display: standalone
+# 本层只保留两类行：必须压过所有 bundle 的（preset 声明、默认模型、会话日志），
+# 以及设置页会回写的（UI 偏好）。插件行归各自的 bundle —— bundle 的补丁文件不会
+# 被应用改写，也不和别的插件挤在同一个文件里。
+#
+# 当前由 bundle 提供的 host 平面行（在 profile 的 `dsh.profile.bundles` 里选中，
+# 由 Plugins 页启停）：Tavily search provider + `web` provider 选择、PWA manifest、
+# 侧栏工作区面板、文件编辑器、位置信息。
 
 # ── Agent preset：声明式 ─────────────────────────────────────────────────────
 #
@@ -278,6 +260,16 @@
           - id: present
             name: '@deepseek-ai/dsh-tool-present'
 
+          # 图像生成（`image_gen` 出图、`image_prompt_guide` 讲提示词）。插件在
+          # plugins/dsh-image-gen，作为 profile 依赖被选中；它 inject 了
+          # `imageGenGate` —— 那个服务由同一个包的 bundle 层插在 host 平面
+          # （`image-gen-gate` 行）。所以在 Plugins 页把 dsh-image-gen 这个 bundle
+          # 关掉，这一行就会等一个不存在的服务，两个工具随之从本 preset 消失。
+          # 这也解释了它为什么必须挂在这里而不是 profile：host 平面挂一行，所有
+          # agent（含没有命名它的 preset）都会看到这两个工具。
+          - id: image-gen
+            name: 'dsh-image-gen'
+
           # ── 地图 MCP ────────────────────────────────────────────────────────────────
 
           # 腾讯位置服务 MCP（远程 Streamable HTTP）。挂在本 preset 而不是 profile 的
@@ -312,13 +304,6 @@
               expandTemplates: true
               startupTimeoutMs: 60000
 
-# Web seam：显式选中 Tavily 作为 web_search 的 provider（确定性选择，不依赖
-# "唯一可用自动选中"）。`fetchProvider: http` 必须跟着重述 —— 整段替换 config。
-- id: web
-  config:
-    searchProvider: tavily
-    fetchProvider: http
-
 # ── 先读后写防护：显式打开 ───────────────────────────────────────────────────
 #
 # base 以 `disabled: true` 交付这一行：`write` 直接覆盖、`edit` 直接替换字面文本，
@@ -350,7 +335,6 @@
 # compaction/prune，以及已被 compaction 剪除的历史；上游代码里没有脱敏）。
 # schema 默认是 `enabled: true`，所以必须显式关。
 #
-# 本行在 profile patch（= GUI 写入的那一层）：设置 → 通用 的开关不再能把它打开。
 # 验收方式：新会话里不出现 `session-log-deepseek/delivery-accepted` 事件。
 - id: session-log-deepseek
   name: '@deepseek-ai/dsh-session-log-deepseek'
@@ -385,40 +369,6 @@
   name: "@deepseek-ai/dsh-client-ui-theme"
   config:
     fontSize: 15
-
-# ── dsh-wsjump：侧栏工作区面板（submodule plugins/dsh-wsjump）────────────────
-#
-# 入口指向构建产物 lib/index.js（lib/ 不进版本管理，构建与挂载细节见插件 README）。
-# 二进制走 PATH 里的 `wsjump`（~/ws/bin 由 home-manager sessionPath 注入），插件
-# 本身默认就按裸名解析并顺带找回配置文件，故不需要 wsjumpPath。
-- insert:
-    - id: dsh-wsjump
-      name: '../../plugins/dsh-wsjump/lib/index.js'
-
-# ── dsh-editor：右侧栏文件编辑器（fork，submodule plugins/dsh-editor）──────────
-#
-# 上游 dongasai/dsh_editor v1.2.0 的 fork（lilitoweiwei/dsh-editor），不用 npm、
-# 也不作为 bundle 选中：这一行按相对路径挂载 Host 半边 index.js，浏览器半边由
-# dsh-client-modules 从 package.json 的 dsh.client 发现（id 取包名
-# @lilitoweiwei/dsh-editor，所以包名与 src/client.js 的 PACKAGE_NAME 必须一致）。
-#
-# 生效方式：新装/摘除本行、改 client.js → 宿主热应用 + 浏览器刷新；
-# 改 index.js 的内容 → 需要重启 dsh-web（本目录不在 HMR 监视集内）。
-- insert:
-    - id: dsh-editor
-      name: '../../plugins/dsh-editor/index.js'
-# ── dsh-webui-location：位置信息（submodule plugins/dsh-webui-location）────────
-#
-# 输入框 + 菜单里一行「位置信息」：点击后向浏览器请求一次高精度定位，把坐标、
-# 误差半径与读取时间写成一行文本插入到光标处（不替换已有内容）。纯浏览器半边，
-# 本行挂载的 Host 入口只是空桩——浏览器半边由 dsh-client-modules 从 package.json
-# 的 dsh.client 发现，故包名与 lib/client.js 里的 id 必须一致。
-#
-# 生效方式：本目录在 HMR 监视集内，新装/摘除本行即宿主热应用；插件自身的 lib/
-# 改动由 client-hmr 轮询热替换。
-- insert:
-    - id: webui-location
-      name: '../../plugins/dsh-webui-location/lib/index.js'
 
 - id: agent-default-model
   name: "@deepseek-ai/dsh-agent-default-model"

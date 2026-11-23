@@ -7,6 +7,23 @@ DSH 本身的版本升级流水（升到哪一版、回退点在哪）不在这�
 
 ## 0.2.2 时代
 
+### 2026-11-23 — 接入 PDF 阅读器 `dsh-pdf-bookmarks`（fork，含自动续读）
+
+补齐右侧栏 PDF 预览的三件事：文档内嵌目录跳转、任意页码跳转、阅读进度。
+
+- **fork 而不是从零写**：上游 `woody-dx/dsh-pdf-bookmarks` 0.1.2 已经用官方 `documentPreviews` 扩展点把
+  PDF 渲染器整块替换掉（`priority: 'extension'`、完整字节、自带 vendored pdf.js 引擎 + `require.async` 懒加载），
+  目录/书签/页码/连续滚动/缩放/文字选择都齐了，本机只需补「自动续读」。
+- fork 仓库 `lilitoweiwei/dsh-pdf-bookmarks`，`0.1.3`：按文档内容 SHA-256 保存页码+页内位置，
+  滚动停止 600ms / 页面隐藏 / 卸载时落盘，重开自动恢复并给出「已回到上次阅读位置」提示与「回到开头」；
+  续读位置单独存 `dsh-pdf-bookmarks:progress:v1:`，旧书签数据零迁移；存储不可用时静默退化为不续读。
+- **接入形态**：submodule `plugins/dsh-pdf-bookmarks`（指向 fork）+ `link:../../plugins/dsh-pdf-bookmarks`，
+  profile 的 `dsh.profile.bundles` 追加 `dsh-pdf-bookmarks`；插件自带 `cordis.patch.yml`（含产物 SHA-256 的
+  guard 行），profile patch 不需要额外条目。
+- **验证**：插件 21 项 Node 测试全过；自带浏览器 harness 实测「滚到第 2 页 → 刷新 → 自动回到第 2 页并出提示」；
+  线上组合 81 个客户端入口里出现 `dsh-pdf-bookmarks`，combo 与 6.8 MB 引擎 chunk 均可取（未重启，配置热重组生效）。
+- **行为**：默认成为 `.pdf` 的阅读器；「打开方式」下拉仍可一键切回内置 PDF，两个预览互不影响。
+
 ### 2026-11-19 — 数据根迁到工作区：`~/.dsh` → `~/ws/w/20260818-dsh/dsh-home`
 
 把整个数据根（profile、插件 submodule、会话、附件、技能、凭据）搬进 DSH 工作区，让源码 checkout、

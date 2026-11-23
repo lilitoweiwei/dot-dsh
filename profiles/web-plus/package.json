@@ -14,7 +14,8 @@
         "dsh-wsjump",
         "@lilitoweiwei/dsh-editor",
         "dsh-webui-location",
-        "dsh-image-gen"
+        "dsh-image-gen",
+        "dsh-pdf-bookmarks"
       ]
     }
   },
@@ -25,6 +26,7 @@
     "dsh-ctrl-enter-submit": "1.1.1",
     "dsh-image-gen": "link:../../plugins/dsh-image-gen",
     "dsh-my-agent-preset": "link:../../plugins/dsh-my-agent-preset",
+    "dsh-pdf-bookmarks": "link:../../plugins/dsh-pdf-bookmarks",
     "dsh-web-mobile": "3.3.5",
     "dsh-webui-location": "link:../../plugins/dsh-webui-location",
     "dsh-wsjump": "link:../../plugins/dsh-wsjump"

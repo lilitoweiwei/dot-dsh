@@ -26,6 +26,9 @@ importers:
       dsh-my-agent-preset:
         specifier: link:../../plugins/dsh-my-agent-preset
         version: link:../../plugins/dsh-my-agent-preset
+      dsh-pdf-bookmarks:
+        specifier: link:../../plugins/dsh-pdf-bookmarks
+        version: link:../../plugins/dsh-pdf-bookmarks
       dsh-web-mobile:
         specifier: 3.3.5
         version: 3.3.5

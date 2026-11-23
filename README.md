@@ -74,6 +74,7 @@ dsh plugin --profile web-plus add "$DSH_HOME/plugins/<name>"
 | `dsh-web-pwa` | DSH Web 的 PWA 安装元数据：自带光栅图标的 manifest + 让浏览器带凭据取 manifest 的 index tap（上游 manifest 用 `sizes:"any"` 的 SVG，Chrome 解析成 `0x0` 装不上；且取 manifest 时不带 cookie，鉴权反代后面只会拿到登录页） | `web-pwa`（`display: standalone`） |
 | `dsh-wsjump` | DSH Web 侧栏的工作区面板：检索 / 新建 wsjump 工作区，编辑其标签与描述（元信息写入 `wsmeta.txt`） | `dsh-wsjump` |
 | `dsh-editor` | 右侧栏文件编辑器（**fork**：[`lilitoweiwei/dsh-editor`](https://github.com/lilitoweiwei/dsh-editor)，上游 `dongasai/dsh_editor` v1.2.0）。官方文档预览只读，它把编辑器注册成文档渲染器（「打开方式」下拉里可逆切换），并补上「🗑 删除」按钮、可保存的编辑器页签与自带文件树的「文件编辑」面板；写盘走插件自己的六条 `/workspace-editor/*` Host 路由，带版本闸、工作区包含检查与沙箱策略 | `workspace-editor` |
+| `dsh-pdf-bookmarks` | 右侧栏 PDF 阅读器（**fork**：[`lilitoweiwei/dsh-pdf-bookmarks`](https://github.com/lilitoweiwei/dsh-pdf-bookmarks)，上游 `woody-dx/dsh-pdf-bookmarks` 0.1.2）。注册为 PDF 文档渲染器（「打开方式」下拉可切回内置 PDF）：内嵌目录跳转、手动书签、页码跳转、连续滚动、缩放与文字选择；本机 fork 增加**自动续读**（按文档内容 SHA-256 记住上次阅读位置，重开自动恢复，可一键回到开头） | `pdf-bookmarks` |
 | `dsh-webui-location` | 输入框 `+` 菜单里的「位置信息」：点一下把浏览器坐标写成一行文本插进光标处 | `webui-location` |
 | `dsh-image-gen` | `image_gen` / `image_prompt_guide` 两个图像生成工具。**唯一的例外**：它插的是 host 平面的 `image-gen-gate` 服务，工具行反而挂在 preset 里（`pluszero` 与 `subone`），工具只在那个 preset 的会话里出现 | `image-gen-gate` |
 

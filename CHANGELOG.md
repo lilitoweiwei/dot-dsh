@@ -44,6 +44,25 @@ DSH 本身的版本升级流水（升到哪一版、回退点在哪）不在这�
 - **部署**：submodule 指向 `b466c86` / tag `v0.1.4`；线上 bundle rev 由内容哈希决定（`2a01c7af7556` 之类），
   重新构建即换 URL，浏览器不会拿旧缓存，也不需要重启服务。
 
+### 2026-11-23 — PDF 阅读器 fork 升到 0.1.5：http 域名下打不开（crypto.subtle）
+
+用户报「手机能看、电脑上直接报 Cannot read properties of undefined (reading 'digest')」。定位为**插件缺陷**（与 PDF 无关）：
+
+- **病因**：`crypto.subtle` 只在安全上下文（https / localhost / file）里存在。本机桌面走 `http://dshu:3080`
+  （tailscale serve 只提供 http，`dshu` → 127.0.0.2），实测该源 `isSecureContext=false`、
+  `crypto.subtle` 与 `crypto.randomUUID` 都是 `undefined`；手机走公网网关 `https://106.14.149.127:9093`，
+  是安全上下文，所以只有电脑炸。文档内容键正是 `crypto.subtle.digest('SHA-256')`，于是打开阶段必抛。
+- **改法**：新增 `src/sha256.js`（纯 JS 增量 SHA-256，输出与原生逐字节一致）作为降级实现，分片计算并用
+  MessageChannel 让出主线程；`documentKey` 优先原生、缺失或抛错时降级；内容键与 PDF 解析/尺寸表并行；
+  `newId()` 三级降级（randomUUID → getRandomValues → Math.random）。内容键不变 ⇒ 已有书签/续读零迁移。
+- **实测**：真实 http 源（`http://insecure.test:58500`，Chromium 147，subtle 缺失）下 926 页 27 MB 文档
+  正常渲染、加书签、滚动存进度、刷新续读到第 9 页全过，控制台零错误，算出的键与 `sha256sum` 一致；
+  安全上下文 16 项功能回归全过；27 MB 纯 JS 哈希约 0.8 s，但切成短任务（最长任务 0 ms），
+  http 源首次打开约多 0.8 s，https 源无此开销。
+- **部署**：submodule 指向 `e1846b7` / tag `v0.1.5`；bundle rev 由内容哈希决定，刷新页面即生效。
+- **残留选项**：若想连这 0.8 s 也去掉，可给 tailscale serve 开 https（`tailscale cert` + `serve https:`），
+  桌面也进安全上下文，届时走原生 digest。
+
 ### 2026-11-19 — 数据根迁到工作区：`~/.dsh` → `~/ws/w/20260818-dsh/dsh-home`
 
 把整个数据根（profile、插件 submodule、会话、附件、技能、凭据）搬进 DSH 工作区，让源码 checkout、
